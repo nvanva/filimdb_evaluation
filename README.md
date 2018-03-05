@@ -10,7 +10,7 @@ git clone https://github.com/nvanva/filimdb_evaluation.git
 ./init.sh
 ```
 
-3. create classifier.py containing the followin functions:
+3. create classifier.py containing the following functions:
 ```
 train(texts, labels)
     """
@@ -33,7 +33,7 @@ def classify(texts, params):
 python evaluate.py
 ```
 
-It will score your classifier and create train_preds.tsv, dev_preds.tsv, test_preds.tsv files with predictions.
+It will score your classifier and create file preds.tsv with predictions.
 
-5. Upload train_preds.tsv, dev_preds.tsv, test_preds.tsv to http://compai-msu.info/.
+5. Upload preds.tsv to http://compai-msu.info/c/ilimdb_sentiment/description.
 Upload classifier.py to http://mdl.cs.msu.ru
