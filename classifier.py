@@ -3,16 +3,16 @@ from random import random
 def count_labels(labels):
     return {label: sum(1 for l in labels if l == label) for label in set(labels)}
 
-def train(texts, labels):
+def train(train_texts, train_labels):
     """
     Trains classifier on the given train set represented as parallel lists of texts and corresponding labels.
-    :param texts: a list of texts (str objects), one str per example
-    :param labels: a list of labels, one label per example
+    :param train_texts: a list of texts (str objects), one str per example
+    :param train_labels: a list of labels, one label per example
     :return: learnt parameters, or any object you like (it will be passed to the classify function)
     """
 
     ############################# REPLACE THIS WITH YOUR CODE #############################
-    label2cnt = count_labels(labels)  # count labels
+    label2cnt = count_labels(train_labels)  # count labels
     print('Labels counts:', label2cnt)
     train_size = sum(label2cnt.values())
     label2prob = {label: cnt / train_size for label, cnt in label2cnt.items()}  # calculate p(label)
