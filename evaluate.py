@@ -1,5 +1,5 @@
 from time import time
-from mnb_classifier_sklearn import train, classify  # classifier.py should be in the same directory
+from classifier import train, classify  # classifier.py should be in the same directory
 from score import load_dataset_fast, score, save_preds, score_preds
 
 PREDS_FNAME = 'preds.tsv'
@@ -29,7 +29,7 @@ def main():
 
     save_preds(allpreds, preds_fname=PREDS_FNAME)
     print('\nChecking saved predictions ...')
-    score_preds(preds_fname=PREDS_FNAME)
+    score_preds(preds_fname=PREDS_FNAME, data_dir='FILIMDB')
 
 if __name__=='__main__':
     main()
