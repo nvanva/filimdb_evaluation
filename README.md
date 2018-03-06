@@ -37,4 +37,4 @@ It will score your classifier and create file preds.tsv with predictions.
 
 5. Upload preds.tsv to http://compai-msu.info/c/ilimdb_sentiment/description.
 
-6. Upload classifier.py to http://mdl.cs.msu.ru
+6. Upload classifier.py to http://mdl.cs.msu.ru, Assignment 1 Submission.
