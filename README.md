@@ -28,12 +28,10 @@ def classify(texts, params):
     :return: list of labels corresponding the the given list of texts
     """
 ```
-4. place classifier.py in the same folder as evaluate.py and run evaluate.py:
+4. place classifier.py in the same folder as evaluate.py and run evaluate.py. It will score your classifier and create file preds.tsv with predictions.
 ```
 python evaluate.py
 ```
-
-It will score your classifier and create file preds.tsv with predictions.
 
 5. Upload preds.tsv to http://compai-msu.info/c/ilimdb_sentiment/description.
 
