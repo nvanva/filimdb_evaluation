@@ -12,7 +12,7 @@ git clone https://github.com/nvanva/filimdb_evaluation.git
 
 3. create classifier.py and write the following functions:
 ```
-train(texts, labels)
+def train(texts, labels):
     """
     Trains classifier on the given train set represented as parallel lists of texts and corresponding labels.
     :param texts: a list of texts (str objects), one str per example
