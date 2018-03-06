@@ -5,12 +5,12 @@
 git clone https://github.com/nvanva/filimdb_evaluation.git
 ```
 
-2. run init.sh to download and unpack dataset:
+2. run init.sh to prepare dataset:
 ```
 ./init.sh
 ```
 
-3. create classifier.py containing the following functions:
+3. create classifier.py and write the following functions:
 ```
 train(texts, labels)
     """
@@ -36,4 +36,5 @@ python evaluate.py
 It will score your classifier and create file preds.tsv with predictions.
 
 5. Upload preds.tsv to http://compai-msu.info/c/ilimdb_sentiment/description.
-Upload classifier.py to http://mdl.cs.msu.ru
+
+6. Upload classifier.py to http://mdl.cs.msu.ru
