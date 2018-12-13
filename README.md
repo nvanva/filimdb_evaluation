@@ -35,4 +35,4 @@ python evaluate.py
 ```
 
 5. Upload preds.tsv to http://compai-msu.info/
-6. Upload classifier.py to http://mdl.cs.msu.ru, Assignment 1 Submission.
+6. Upload classifier.py to http://mdl.cs.msu.ru
