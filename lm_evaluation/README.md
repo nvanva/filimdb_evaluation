@@ -13,7 +13,7 @@
     ```
         def softmax_generator(ptb_path):
             """
-                input:
+            input:
                 path to the PTB data folder.
             return:
                 :id_to_word - dict: word index -> word, size -> vocabulary size
