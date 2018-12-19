@@ -53,7 +53,7 @@ git clone https://github.com/nvanva/filimdb_evaluation.git
 
 4. Run evaluate_lm.py
     ```
-        $ python evaluate.py
+python evaluate.py
     ```
 5. Load preds.tsv to ??? (coming soon).
 6. Load lm.py to  http://mdl.cs.msu.ru
