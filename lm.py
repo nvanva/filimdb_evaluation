@@ -10,9 +10,9 @@ def normalize(x):
 
 def train(token_list, word_to_id, id_to_word):
     """
-    Trains classifier on the given train set represented as a list of token ids.
+    Trains n-gram language model on the given train set represented as a list of token ids.
     :param token_list: a list of token ids
-    :return: learnt parameters, or any object you like (it will be passed to the classify function)
+    :return: learnt parameters, or any object you like (it will be passed to the next_proba_gen function)
     """
 
     ############################# REPLACE THIS WITH YOUR CODE #############################
@@ -28,7 +28,7 @@ def next_proba_gen(token_gen, params):
     For each input token estimate next token probability distribution.
     :param token_gen: generator returning sequence of token ids
     :param params: parameters received from train function
-    :return: for each token in token_gen should return vector of shape (vocab_size)
+    :return: for each token in token_gen should yield vector of shape (vocab_size)
      representing predicted probabilities of each token in vocabulary to be next token
     """
 
