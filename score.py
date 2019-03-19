@@ -5,9 +5,9 @@ import random
 
 random.seed(3)  # set random seed for each run of the script to produce the same results
 SCORED_PARTS = ('train', 'dev', 'test')
-ALL_PARTS = (*SCORED_PARTS, 'train_unlabeled')
 
-def load_dataset_fast(data_dir='FILIMDB', parts=SCORED_PARTS):
+
+def load_dataset_fast(data_dir='FILIMDB', parts=('train', 'dev', 'test')):
     """
     Loads data from specified directory. Returns dictionary part->(list of texts, list of corresponding labels).
     """
@@ -17,7 +17,7 @@ def load_dataset_fast(data_dir='FILIMDB', parts=SCORED_PARTS):
 
         xpath = os.path.join(data_dir, '%s.texts' % part)
         with codecs.open(xpath, 'r', encoding='utf-8') as inp:
-            texts = [s.strip() for s in inp.read().strip().split('\n')]
+            texts = [s.strip() for s in inp.read().split('\n')]
 
         ypath = os.path.join(data_dir, '%s.labels' % part)
         if os.path.exists(ypath):
@@ -104,14 +104,10 @@ def load_preds(preds_fname):
 
 
 def score_preds(preds_fname, data_dir='FILIMDB'):
-    part2xy = load_dataset_fast(data_dir=data_dir, parts=SCORED_PARTS)
-    return score_preds_loaded(part2xy, preds_fname)
-
-
-def score_preds_loaded(part2xy, preds_fname):
     pred_ids, pred_y = load_preds(preds_fname)
     pred_dict = {i: y for i, y in zip(pred_ids, pred_y)}
     scores = {}
+    part2xy = load_dataset_fast(data_dir=data_dir, parts=SCORED_PARTS)
     for part, (true_ids, _, true_y) in part2xy.items():
         if true_y is None:
             print('no labels for %s set' % part)
