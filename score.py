@@ -17,7 +17,7 @@ def load_dataset_fast(data_dir='FILIMDB', parts=('train', 'dev', 'test')):
 
         xpath = os.path.join(data_dir, '%s.texts' % part)
         with codecs.open(xpath, 'r', encoding='utf-8') as inp:
-            texts = [s.strip() for s in inp.read().split('\n')]
+            texts = [s.strip() for s in inp.read().strip().split('\n')]
 
         ypath = os.path.join(data_dir, '%s.labels' % part)
         if os.path.exists(ypath):
