@@ -45,7 +45,7 @@ def save_preds(preds, preds_fname):
     """
     with codecs.open(preds_fname, 'w') as outp:
         for prob, pred_word, true_word in preds:
-            print(prob, pred_word, true_word, sep='\t', file=outp)
+            print(true_word, prob, pred_word, sep='\t', file=outp)
     print('Predictions saved to %s' % preds_fname)
 
 
@@ -55,7 +55,7 @@ def load_preds(preds_fname):
     """
     with codecs.open(preds_fname,'r') as inp:
         pairs = [l.strip().split('\t') for l in inp.readlines()]
-    probs, pred_words, true_words = zip(*pairs)
+    true_words, probs, pred_words = zip(*pairs)
     probs = np.array(probs, dtype=np.float32)
 
     return probs, pred_words, true_words
@@ -75,10 +75,10 @@ def score_preds(preds_path, ptb_path):
     with open(test_path, 'r') as f:
         true_text = f.read().strip()
 
-    # Проверка на совпадение с текстом из ptb
+    # Check text is PTB
     assert text == true_text[:len(text)]
 
-    # Подсчет перплексии
+    # Perplexity calculation
     perplexity = compute_perplexity(probs)
 
     print('Perplexity:', perplexity)
