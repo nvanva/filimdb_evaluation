@@ -76,7 +76,8 @@ def score_preds(preds_path, ptb_path):
         true_text = f.read().strip()
 
     # Check text is PTB
-    assert text == true_text[:len(text)]
+    if text != true_text[:len(text)]:
+        raise ValueError('Received text does not match PTB text')
 
     # Perplexity calculation
     perplexity = compute_perplexity(probs)
