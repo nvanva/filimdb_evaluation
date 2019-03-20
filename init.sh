@@ -1,3 +1,2 @@
 tar xvf FILIMDB.tar.gz
-wget http://www.fit.vutbr.cz/~imikolov/rnnlm/simple-examples.tgz
-tar xvf simple-examples.tgz
+tar xvf PTB.tar.gz
