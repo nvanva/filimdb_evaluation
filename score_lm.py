@@ -51,7 +51,7 @@ def save_preds(preds, preds_fname):
 
 def load_preds(preds_fname):
     """
-    Save classifier predictions in format appropriate for scoring.
+    Load classifier predictions in format appropriate for scoring.
     """
     with codecs.open(preds_fname,'r') as inp:
         pairs = [l.strip().split('\t') for l in inp.readlines()]
@@ -62,26 +62,36 @@ def load_preds(preds_fname):
 
 def compute_perplexity(probs):
     perplexity = np.exp(-np.log(probs).sum() / len(probs))
-
     return perplexity
 
 def score_preds(preds_path, ptb_path):
+    probs, _, recieved_text = load_preds(preds_path)
 
-    probs, _, true_words = load_preds(preds_path)
+    train_path = os.path.join(ptb_path, "ptb.train.txt")
+    dev_path = os.path.join(ptb_path, "ptb.valid.txt")
+    test_path = os.path.join(ptb_path, "ptb.test.txt")
 
-    text = ' '.join(true_words).replace('<eos>', '\n').strip()
-    
-    test_path = os.path.join(ptb_path, 'ptb.test.txt')
-    with open(test_path, 'r') as f:
-        true_text = f.read().strip()
+    train_text = _read_words(train_path)[:-1]
+    dev_text = _read_words(dev_path)[:-1]
+    test_text = _read_words(test_path)[:-1]
 
-    # Check text is PTB
-    if text != true_text[:len(text)]:
-        raise ValueError('Received text does not match PTB text')
+    ptb_dataset = [('train', train_text),
+                   ('valid', dev_text), 
+                   ('test', test_text)]
 
-    # Perplexity calculation
-    perplexity = compute_perplexity(probs)
+    scores = dict()
+    for name, text in ptb_dataset:
+        len_text = len(text)
 
-    print('Perplexity:', perplexity)
+        # Check text is PTB
+        if ' '.join(recieved_text[:len_text]) != ' '.join(text):
+            raise Exception('Received text does not match PTB text')
 
-    return perplexity
+        # Perplexity calculation
+        perplexity = compute_perplexity(probs[:len_text])  
+
+        scores[name] = perplexity
+
+        probs, recieved_text = probs[len_text:], recieved_text[len_text:]
+
+    return scores

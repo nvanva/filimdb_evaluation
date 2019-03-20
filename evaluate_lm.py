@@ -14,13 +14,11 @@ def check_softmax(softmax):
     if (softmax > 1).any():
         print("Some probabilities are >1")
 
-    e = 1e-7
+    eps = 1e-7
     prob = softmax.sum()
 
-    if abs(1.0 - prob) > e:
-        print("Sum of the probabilities isn't equal to 1")
-        print(prob)
-        exit(0)
+    if abs(1.0 - prob) > eps:
+        raise Exception("Sum of the probabilities isn't equal to 1. Sum: {}".format(prob))
 
 
 class ProtectedTokenIterator(object):
@@ -37,37 +35,46 @@ class ProtectedTokenIterator(object):
         self.allow_next = False
         return next(self.it)
 
+def predict_probs(model, id_to_word, data, name):
+    test_token_gen = ProtectedTokenIterator(data)
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--ptb_path', default='simple-examples/data', help='Path to PTB data')
-    args = parser.parse_args()
-
-    ptb_path = args.ptb_path
-    raw_data = load_dataset(ptb_path)
-    train_data, dev_data, test_data, word_to_id, id_to_word = raw_data
-
-    model = train(train_data, word_to_id, id_to_word)
-
-    test_token_gen = ProtectedTokenIterator(test_data)
-
-    allpreds = []
-    for cur_id, next_id, softmax in zip(tqdm(test_data[:-1]), test_data[1:], next_proba_gen(test_token_gen, model)):
+    preds = []
+    desc = 'Generate probability of the next word. Dataset: "{}"'.format(name)
+    for cur_id, next_id, softmax in zip(tqdm(data[:-1], desc=desc), data[1:], next_proba_gen(test_token_gen, model)):
         test_token_gen.allow_next = True
 
-        # Проверка на batch_size=1, num_steps=1
+        # Check batch_size==1 and num_steps==1
         assert softmax.shape == (len(id_to_word),)
 
-        # Проверка на суммируемость вероятностей к 1
         check_softmax(softmax)
 
         next_prob = softmax[next_id]
         pred_word = id_to_word[np.argmax(softmax)]
-        allpreds.append([next_prob, pred_word, id_to_word[cur_id]])
+        preds.append([next_prob, pred_word, id_to_word[cur_id]])
+
+    return preds
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--ptb_path', default='PTB', help='Path to PTB data')
+    args = parser.parse_args()
+
+    raw_data = load_dataset(args.ptb_path)
+    train_data, dev_data, test_data, word_to_id, id_to_word = raw_data
+
+    model = train(train_data, word_to_id, id_to_word)
+
+    allpreds = []
+    allpreds.extend(predict_probs(model, id_to_word, train_data, 'train'))
+    allpreds.extend(predict_probs(model, id_to_word, dev_data, 'valid'))
+    allpreds.extend(predict_probs(model, id_to_word, test_data, 'test'))
 
     save_preds(allpreds, preds_fname=PREDS_FNAME)
 
-    score_preds(PREDS_FNAME, ptb_path)
+    scores = score_preds(PREDS_FNAME, args.ptb_path)
+
+    for name, score in scores.items():
+        print('{} perplexity: {}'.format(name.capitalize(), score))
 
 if __name__=='__main__':
     main()
