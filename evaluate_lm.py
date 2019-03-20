@@ -14,7 +14,7 @@ def check_softmax(softmax):
     if (softmax > 1).any():
         print("Some probabilities are >1")
 
-    eps = 1e-7
+    eps = 1e-5
     prob = softmax.sum()
 
     if abs(1.0 - prob) > eps:
