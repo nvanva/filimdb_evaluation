@@ -20,7 +20,6 @@ def check_softmax(softmax):
     if abs(1.0 - prob) > eps:
         raise Exception("Sum of the probabilities isn't equal to 1. Sum: {}".format(prob))
 
-
 class ProtectedTokenIterator(object):
     def __init__(self, tokens):
         self.it = iter(tokens)
@@ -35,12 +34,12 @@ class ProtectedTokenIterator(object):
         self.allow_next = False
         return next(self.it)
 
-def predict_probs(model, id_to_word, data, name):
+def predict_probs(model, id_to_word, data, name, top_k=3):
     test_token_gen = ProtectedTokenIterator(data)
 
     preds = []
     desc = 'Generate probability of the next word. Dataset: "{}"'.format(name)
-    for cur_id, next_id, softmax in zip(tqdm(data[:-1], desc=desc), data[1:], next_proba_gen(test_token_gen, model)):
+    for prev_id, next_id, softmax in zip(tqdm(data[:-1], desc=desc), data[1:], next_proba_gen(test_token_gen, model)):
         test_token_gen.allow_next = True
 
         # Check batch_size==1 and num_steps==1
@@ -48,9 +47,14 @@ def predict_probs(model, id_to_word, data, name):
 
         check_softmax(softmax)
 
-        next_prob = softmax[next_id]
-        pred_word = id_to_word[np.argmax(softmax)]
-        preds.append([next_prob, pred_word, id_to_word[cur_id]])
+        true_prob = softmax[next_id]
+        true_rank = len(np.where(softmax > true_prob)[0])
+        
+        top_k_idxs = np.argpartition(-softmax, top_k)[: top_k]
+        sorted_top_k_idxs = top_k_idxs[np.argsort(-softmax[top_k_idxs])]
+        top_k_words = [id_to_word[idx] for idx in sorted_top_k_idxs]
+
+        preds.append([id_to_word[prev_id]] + top_k_words + [true_prob, true_rank])
 
     return preds
 
@@ -64,7 +68,7 @@ def main():
 
     model = train(train_data, word_to_id, id_to_word)
 
-    allpreds = []
+    allpreds = [['prev', 'pred1', 'pred2', 'pred3', 'true_prob', 'true_rank']]
     allpreds.extend(predict_probs(model, id_to_word, train_data, 'train'))
     allpreds.extend(predict_probs(model, id_to_word, dev_data, 'valid'))
     allpreds.extend(predict_probs(model, id_to_word, test_data, 'test'))
@@ -73,8 +77,17 @@ def main():
 
     scores = score_preds(PREDS_FNAME, args.ptb_path)
 
-    for name, score in scores.items():
-        print('{} perplexity: {}'.format(name.capitalize(), score))
+    for method_name, method_scores in scores.items():
+        for metric, value in method_scores.items():
+            print('{} {}: {}'.format(method_name.capitalize(), metric, value))
+        print()
+
+    # comments = []
+    # for score in ['perplexity', 'hit@10', 'avg_rank']:
+    #     for part in ['train', 'valid']:
+    #         comments.append('{}_{}: {:.3f}'.format(part, score, scores[part][score]))
+    # comment = ', '.join(comments)
+    # print(comment)
 
 if __name__=='__main__':
     main()

@@ -44,8 +44,8 @@ def save_preds(preds, preds_fname):
     Save classifier predictions in format appropriate for scoring.
     """
     with codecs.open(preds_fname, 'w') as outp:
-        for prob, pred_word, true_word in preds:
-            print(true_word, prob, pred_word, sep='\t', file=outp)
+        for vals in preds:
+            print(*vals, sep='\t', file=outp)
     print('Predictions saved to %s' % preds_fname)
 
 
@@ -54,18 +54,29 @@ def load_preds(preds_fname):
     Load classifier predictions in format appropriate for scoring.
     """
     with codecs.open(preds_fname,'r') as inp:
-        pairs = [l.strip().split('\t') for l in inp.readlines()]
-    true_words, probs, pred_words = zip(*pairs)
-    probs = np.array(probs, dtype=np.float32)
+        pairs = [l.strip().split('\t') for l in inp.readlines()[1:]]
+    # true_words, probs, pred_words = zip(*pairs)
+    prevs, preds1, preds2, preds3, true_probs, true_ranks = zip(*pairs)
 
-    return probs, pred_words, true_words
+    true_probs = np.array(true_probs, dtype=np.float32)
+    true_ranks = np.array(true_ranks, dtype=np.int32)
+
+    return prevs, preds1, preds2, preds3, true_probs, true_ranks
 
 def compute_perplexity(probs):
     perplexity = np.exp(-np.log(probs).sum() / len(probs))
     return perplexity
 
+def compute_hit_k(ranks, k=10):
+    mask = np.where(ranks < k)[0]
+    return float(len(mask)) / len(ranks)
+
+def compute_average_rank(ranks):
+    return np.mean(ranks)
+
 def score_preds(preds_path, ptb_path):
-    probs, _, recieved_text = load_preds(preds_path)
+    data = load_preds(preds_path)
+    recieved_text, preds1, preds2, preds3, probs, ranks = data
 
     train_path = os.path.join(ptb_path, "ptb.train.txt")
     dev_path = os.path.join(ptb_path, "ptb.valid.txt")
@@ -89,9 +100,15 @@ def score_preds(preds_path, ptb_path):
 
         # Perplexity calculation
         perplexity = compute_perplexity(probs[:len_text])  
+        hit_k = compute_hit_k(ranks[:len_text])
+        avg_rank = compute_average_rank(ranks[:len_text])
 
-        scores[name] = perplexity
+        scores[name] = {'perplexity': perplexity, 
+                        'hit@10': hit_k, 
+                        'avg_rank': avg_rank}
 
-        probs, recieved_text = probs[len_text:], recieved_text[len_text:]
+        probs = probs[len_text:]
+        ranks = ranks[len_text:]
+        recieved_text = recieved_text[len_text:]
 
     return scores
