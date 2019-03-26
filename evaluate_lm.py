@@ -1,7 +1,7 @@
 import argparse
 import numpy as np
 from tqdm import tqdm
-
+from itertools import chain
 from lm import train, next_proba_gen
 from score_lm import load_dataset, save_preds, score_preds
 
@@ -14,13 +14,19 @@ def check_softmax(softmax):
     if (softmax > 1).any():
         print("Some probabilities are >1")
 
-    eps = 1e-5
-    prob = softmax.sum()
+    eps = 1e-3
+    prob = softmax.sum(axis=-1)
 
-    if abs(1.0 - prob) > eps:
-        raise Exception("Sum of the probabilities isn't equal to 1. Sum: {}".format(prob))
+    dontsum = abs(1.0 - prob) > eps
+    if dontsum.any():
+        raise Exception("Sum of the probabilities isn't equal to 1. Sum: {}".format(prob[dontsum]))
+
 
 class ProtectedTokenIterator(object):
+    """
+    ProtectedTokenIterator doesn't allow LM to look forward (get actual next token before returning predicted
+    distribution for it.
+    """
     def __init__(self, tokens):
         self.it = iter(tokens)
         self.allow_next = True
@@ -34,29 +40,52 @@ class ProtectedTokenIterator(object):
         self.allow_next = False
         return next(self.it)
 
-def predict_probs(model, id_to_word, data, name, top_k=3):
-    test_token_gen = ProtectedTokenIterator(data)
+
+def predict_probs(model, id_to_word, data, name, top_k=3, bs=100):
+    data = np.array(data)
+    tail = len(data)//bs*bs
+    X, X_tail = data[0:tail].reshape(bs, -1).T, data[tail:-1].reshape(1, -1).T  # X[i+1,j] is the next word after X[i,j]
+    assert (np.concatenate([X[:, i] for i in range(X.shape[1])] + [X_tail[:, 0]]) == data[:-1]).all()
+    Y, Y_tail = data[1:tail+1].reshape(bs, -1).T, data[tail+1:].reshape(1, -1).T
 
     preds = []
-    desc = 'Generate probability of the next word. Dataset: "{}"'.format(name)
-    for prev_id, next_id, softmax in zip(tqdm(data[:-1], desc=desc), data[1:], next_proba_gen(test_token_gen, model)):
-        test_token_gen.allow_next = True
+    desc = 'Generate probability of the next word. Dataset: "{}", batch size: {}'.format(name, bs)
+    X_protected_it = ProtectedTokenIterator(X)
+    for cur_id, next_id, softmax in zip(tqdm(X, desc=desc), Y, next_proba_gen(X_protected_it, model)):
+        X_protected_it.allow_next = True
+        append_prediction(preds, cur_id, next_id, softmax, id_to_word, top_k, bs)
 
-        # Check batch_size==1 and num_steps==1
-        assert softmax.shape == (len(id_to_word),)
+    r = map(lambda lol: np.array(lol).T.ravel(), zip(*preds))  # convert to triple of 1D-arrays, making next column continuation of the previous one
 
-        check_softmax(softmax)
+    bs = 1  # process tail with batch size 1
+    preds = []
+    desc = 'Generate probability of the next word. Dataset: "{}" (tail), batch size: {}'.format(name, bs)
+    X_protected_it = ProtectedTokenIterator(X_tail)
+    for cur_id, next_id, softmax in zip(tqdm(X_tail, desc=desc), Y_tail, next_proba_gen(X_protected_it, model)):
+        X_protected_it.allow_next = True
+        append_prediction(preds, cur_id, next_id, softmax, id_to_word, top_k, bs)
 
-        true_prob = softmax[next_id]
-        true_rank = len(np.where(softmax > true_prob)[0])
-        
-        top_k_idxs = np.argpartition(-softmax, top_k)[: top_k]
-        sorted_top_k_idxs = top_k_idxs[np.argsort(-softmax[top_k_idxs])]
-        top_k_words = [id_to_word[idx] for idx in sorted_top_k_idxs]
+    rtail = map(lambda lol: np.array(lol).T.ravel(), zip(*preds))
+    return chain(zip(*r), zip(*rtail))  # convert to iterable over triples
 
-        preds.append([id_to_word[prev_id]] + top_k_words + [true_prob, true_rank])
 
-    return preds
+def append_prediction(preds, cur_id, next_id, softmax, id_to_word, top_k, bs):
+    assert softmax.shape == (bs, len(id_to_word),)
+    check_softmax(softmax)
+
+    cur_word = [id_to_word[i] for i in cur_id]
+    true_prob = softmax[np.arange(bs), next_id]
+    true_rank = (softmax >= true_prob.reshape(-1, 1)).sum(axis=-1) - 1
+
+    top_k_idxs = np.argpartition(softmax, -top_k, axis=-1)[:, -top_k:]
+    allrows_matr = np.arange(bs)[:, np.newaxis].repeat(top_k, axis=1)
+    top_k_idxs_order = softmax[allrows_matr, top_k_idxs].argsort(axis=-1)[:, ::-1]
+    top_k_idxs_sorted = top_k_idxs[allrows_matr, top_k_idxs_order]
+
+    top_k_words = [[id_to_word[idx] for idx in top_k_idxs_sorted[:, i]] for i in range(top_k)]
+    # top_k_words = []
+    preds.append([cur_word] + top_k_words + [true_prob, true_rank])
+
 
 def main():
     parser = argparse.ArgumentParser()
