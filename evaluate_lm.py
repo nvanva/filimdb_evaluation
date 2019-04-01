@@ -2,10 +2,23 @@ import argparse
 import numpy as np
 from tqdm import tqdm
 from itertools import chain
+from collections import Counter
+
 from lm import train, next_proba_gen
 from score_lm import load_dataset, save_preds, score_preds
 
 PREDS_FNAME = 'preds.tsv'
+
+def normalize(x):
+    return x / x.sum(axis=-1)
+
+
+def train_unigram_model(token_list, word_to_id):
+    vocab_size = len(word_to_id)
+    counter = Counter(token_list)
+    unigram_probs = normalize(np.array([counter[i] for i in range(vocab_size)]))
+    return unigram_probs
+
 
 def check_softmax(softmax):
     if (softmax < 0).any():
@@ -41,7 +54,7 @@ class ProtectedTokenIterator(object):
         return next(self.it)
 
 
-def predict_probs(model, id_to_word, data, name, top_k=3, bs=100):
+def predict_probs(model, id_to_word, data, unigram_probs, name, top_k=3, bs=100):
     data = np.array(data)
     tail = len(data)//bs*bs
     X, X_tail = data[0:tail].reshape(bs, -1).T, data[tail:-1].reshape(1, -1).T  # X[i+1,j] is the next word after X[i,j]
@@ -53,7 +66,7 @@ def predict_probs(model, id_to_word, data, name, top_k=3, bs=100):
     X_protected_it = ProtectedTokenIterator(X)
     for cur_id, next_id, softmax in zip(tqdm(X, desc=desc), Y, next_proba_gen(X_protected_it, model)):
         X_protected_it.allow_next = True
-        append_prediction(preds, cur_id, next_id, softmax, id_to_word, top_k, bs)
+        append_prediction(preds, cur_id, next_id, softmax, unigram_probs, id_to_word, top_k, bs)
 
     r = map(lambda lol: np.array(lol).T.ravel(), zip(*preds))  # convert to triple of 1D-arrays, making next column continuation of the previous one
 
@@ -63,13 +76,26 @@ def predict_probs(model, id_to_word, data, name, top_k=3, bs=100):
     X_protected_it = ProtectedTokenIterator(X_tail)
     for cur_id, next_id, softmax in zip(tqdm(X_tail, desc=desc), Y_tail, next_proba_gen(X_protected_it, model)):
         X_protected_it.allow_next = True
-        append_prediction(preds, cur_id, next_id, softmax, id_to_word, top_k, bs)
+        append_prediction(preds, cur_id, next_id, softmax, unigram_probs, id_to_word, top_k, bs)
 
     rtail = map(lambda lol: np.array(lol).T.ravel(), zip(*preds))
     return chain(zip(*r), zip(*rtail))  # convert to iterable over triples
 
 
-def append_prediction(preds, cur_id, next_id, softmax, id_to_word, top_k, bs):
+def compute_kl_divergence(P, Q, is_uniform=False):
+    eps = 1e-5
+    P_mod = P + eps
+    if is_uniform:
+        n = P_mod.shape[1]
+        divergence = np.log(n)+np.sum(P_mod*np.log(P_mod), axis=1)
+    else:
+        Q_mod = Q + eps
+        divergence = np.sum(P_mod*np.log(P_mod/Q_mod), axis=1)
+
+    return divergence
+
+
+def append_prediction(preds, cur_id, next_id, softmax, unigram_probs, id_to_word, top_k, bs):
     assert softmax.shape == (bs, len(id_to_word),)
     check_softmax(softmax)
 
@@ -77,14 +103,17 @@ def append_prediction(preds, cur_id, next_id, softmax, id_to_word, top_k, bs):
     true_prob = softmax[np.arange(bs), next_id]
     true_rank = (softmax >= true_prob.reshape(-1, 1)).sum(axis=-1) - 1
 
+    kl_uniform = compute_kl_divergence(softmax, None, is_uniform=True)
+    kl_unigram = compute_kl_divergence(softmax, unigram_probs)
+    kl_divergences = [kl_uniform, kl_unigram]
+
     top_k_idxs = np.argpartition(softmax, -top_k, axis=-1)[:, -top_k:]
     allrows_matr = np.arange(bs)[:, np.newaxis].repeat(top_k, axis=1)
     top_k_idxs_order = softmax[allrows_matr, top_k_idxs].argsort(axis=-1)[:, ::-1]
     top_k_idxs_sorted = top_k_idxs[allrows_matr, top_k_idxs_order]
 
     top_k_words = [[id_to_word[idx] for idx in top_k_idxs_sorted[:, i]] for i in range(top_k)]
-    # top_k_words = []
-    preds.append([cur_word] + top_k_words + [true_prob, true_rank])
+    preds.append([cur_word] + top_k_words + [true_prob, true_rank] + kl_divergences)
 
 
 def main():
@@ -96,11 +125,13 @@ def main():
     train_data, dev_data, test_data, word_to_id, id_to_word = raw_data
 
     model = train(train_data, word_to_id, id_to_word)
+    unigram_probs = train_unigram_model(train_data, word_to_id)
 
-    allpreds = [['prev', 'pred1', 'pred2', 'pred3', 'true_prob', 'true_rank']]
-    allpreds.extend(predict_probs(model, id_to_word, train_data, 'train'))
-    allpreds.extend(predict_probs(model, id_to_word, dev_data, 'valid'))
-    allpreds.extend(predict_probs(model, id_to_word, test_data, 'test'))
+    allpreds = [['prev', 'pred1', 'pred2', 'pred3', 
+                 'true_prob', 'true_rank', 'kl_uniform', 'kl_unigram']]
+    allpreds.extend(predict_probs(model, id_to_word, train_data, unigram_probs, 'train'))
+    allpreds.extend(predict_probs(model, id_to_word, dev_data, unigram_probs, 'valid'))
+    allpreds.extend(predict_probs(model, id_to_word, test_data, unigram_probs, 'test'))
 
     save_preds(allpreds, preds_fname=PREDS_FNAME)
 
