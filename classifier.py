@@ -3,7 +3,7 @@ from random import random
 def count_labels(labels):
     return {label: sum(1 for l in labels if l == label) for label in set(labels)}
 
-def train(train_texts, train_labels):
+def train(train_texts, train_labels, params = None):
     """
     Trains classifier on the given train set represented as parallel lists of texts and corresponding labels.
     :param train_texts: a list of texts (str objects), one str per example
@@ -19,7 +19,15 @@ def train(train_texts, train_labels):
     print(label2prob)
     return {'prior': label2prob}  # this dummy classifier learns prior probabilities of labels p(label)
     ############################# REPLACE THIS WITH YOUR CODE #############################
-   
+
+def pretrain(all_texts):
+   """
+   Pretrain classifier on all avaliable texts
+   :param all_texts: a list of texts (str objects), one str per example
+   :return: learnt parameters, or any object you like (it will be passed to the train function)
+   """
+   ############################# PUT YOUR CODE HERE #######################################
+   return None
 
 def classify(texts, params):
     """

@@ -6,13 +6,33 @@ PREDS_FNAME = 'preds.tsv'
 
 
 def main():
-    part2xy = load_dataset_fast('FILIMDB')
-    train_ids, train_texts, train_labels = part2xy['train']
-
-    print('\nTraining classifier on %d examples from train set ...' % len(train_texts))
-    st = time()
-    params = train(train_texts, train_labels)
-    print('Classifier trained in %.2fs' % (time() - st))
+    try:
+        from classifier import pretrain
+    except ImportError:
+        part2xy = load_dataset_fast('FILIMDB')
+        train_ids, train_texts, train_labels = part2xy['train']
+        print('\nTraining classifier on %d examples from train set ...' % len(train_texts))
+        st = time()
+        params = train(train_texts, train_labels)
+        print('Classifier trained in %.2fs' % (time() - st))
+    else:
+        part2xy = load_dataset_fast('FILIMDB', parts=('train', 'dev', 'test', 'train_unlabeled'))
+        train_ids, train_texts, train_labels = part2xy['train']
+        _, dev_texts, _ = part2xy['dev']
+        _, test_texts, _ = part2xy['test']
+        print(part2xy.keys())
+        _, train_unlabeled_texts, _ = part2xy['train_unlabeled']
+        all_texts = train_texts + dev_texts  + train_unlabeled_texts + test_texts
+        
+        print('\nPretraining classifier on %d examples' % len(all_texts))
+        st = time()
+        params = pretrain(all_texts)
+        print('Classifier trained in %.2fs' % (time() - st))
+        print('\nTraining classifier on %d examples from train set ...' % len(train_texts))
+        st = time()
+        params = train(train_texts, train_labels, params)
+        print('Classifier trained in %.2fs' % (time() - st))
+        del part2xy["train_unlabeled"]
 
     allpreds = []
     for part, (ids, x, y) in part2xy.items():
