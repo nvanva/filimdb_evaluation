@@ -35,6 +35,27 @@ def check_softmax(softmax):
         raise Exception("Sum of the probabilities isn't equal to 1. Sum: {}".format(prob[dontsum]))
 
 
+def sampling(model, unigram_probs, word_to_id, id_to_word, size, tokens=None, temperature=1.0):
+    if tokens is None:
+        idx = np.random.choice(len(id_to_word), p=unigram_probs)
+        tokens = [id_to_word[idx]]
+
+    hidden = None
+    eos_id = word_to_id['<eos>']
+    sequence = [word_to_id[word] for word in tokens]
+    for _ in range(size):
+        softmax, hidden = next(next_proba_gen([[sequence[-1]]], model, hidden=hidden))
+        softmax = softmax[0]
+        if temperature != 1.0:
+            softmax = np.float_power(softmax, 1.0/temperature)
+            softmax /= softmax.sum()
+        idx = np.random.choice(list(range(len(softmax))), 1, p=softmax)
+        sequence.append(idx[0])
+
+    gen_text = [id_to_word[idx] for idx in sequence]
+    return ' '.join(gen_text)
+
+
 class ProtectedTokenIterator(object):
     """
     ProtectedTokenIterator doesn't allow LM to look forward (get actual next token before returning predicted
@@ -64,7 +85,7 @@ def predict_probs(model, id_to_word, data, unigram_probs, name, top_k=3, bs=100)
     preds = []
     desc = 'Generate probability of the next word. Dataset: "{}", batch size: {}'.format(name, bs)
     X_protected_it = ProtectedTokenIterator(X)
-    for cur_id, next_id, softmax in zip(tqdm(X, desc=desc), Y, next_proba_gen(X_protected_it, model)):
+    for cur_id, next_id, (softmax, hidden_state) in zip(tqdm(X, desc=desc), Y, next_proba_gen(X_protected_it, model)):
         X_protected_it.allow_next = True
         append_prediction(preds, cur_id, next_id, softmax, unigram_probs, id_to_word, top_k, bs)
 
@@ -74,7 +95,7 @@ def predict_probs(model, id_to_word, data, unigram_probs, name, top_k=3, bs=100)
     preds = []
     desc = 'Generate probability of the next word. Dataset: "{}" (tail), batch size: {}'.format(name, bs)
     X_protected_it = ProtectedTokenIterator(X_tail)
-    for cur_id, next_id, softmax in zip(tqdm(X_tail, desc=desc), Y_tail, next_proba_gen(X_protected_it, model)):
+    for cur_id, next_id, (softmax, hidden_state) in zip(tqdm(X_tail, desc=desc), Y_tail, next_proba_gen(X_protected_it, model)):
         X_protected_it.allow_next = True
         append_prediction(preds, cur_id, next_id, softmax, unigram_probs, id_to_word, top_k, bs)
 

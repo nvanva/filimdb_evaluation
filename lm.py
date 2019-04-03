@@ -23,7 +23,7 @@ def train(token_list, word_to_id, id_to_word):
     ############################# REPLACE THIS WITH YOUR CODE #############################
 
 
-def next_proba_gen(token_gen, params):
+def next_proba_gen(token_gen, params, hidden_state=None):
     """
     For each input token estimate next token probability distribution.
     :param token_gen: generator returning sequence of arrays of token ids (each array has batch_size independent ids);
@@ -51,6 +51,6 @@ def next_proba_gen(token_gen, params):
         probs = np.vstack([unigram_probs * lambda1 + np.asarray(m[token, :]).reshape(-1) * lambda2 for token in token_arr])
         assert (np.abs(np.sum(probs, axis=-1)-1) < 1e-5).all()
         assert probs.shape[1]==vocab_size
-        yield probs
+        yield probs, None
 
     ############################# REPLACE THIS WITH YOUR CODE #############################
