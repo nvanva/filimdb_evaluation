@@ -27,10 +27,17 @@ def next_proba_gen(token_gen, params, hidden_state=None):
     """
     For each input token estimate next token probability distribution.
     :param token_gen: generator returning sequence of arrays of token ids (each array has batch_size independent ids);
-    i-th element of next array is next token for i-th element of previous array
+     i-th element of next array is next token for i-th element of previous array
     :param params: parameters received from train function
-    :return: for each array from token_gen should yield vector of shape (batch_size, vocab_size)
-     representing predicted probabilities of each token in vocabulary to be next token
+    :param hidden_state: the initial state for next token that may be required 
+     for sampling from the language model
+    :param hidden_state: use this as the initial state for your language model(if it is not None).
+     That may be required for sampling from the language model.
+
+    :return: probs: for each array from token_gen should yield vector of shape (batch_size, vocab_size)
+     representing predicted probabilities of each token in vocabulary to be next token.
+     hidden_state: return the hidden state at each time step of your language model. 
+     For sampling from language model it will be used as the initial state for the following tokens.
     """
 
     ############################# REPLACE THIS WITH YOUR CODE #############################
@@ -51,6 +58,6 @@ def next_proba_gen(token_gen, params, hidden_state=None):
         probs = np.vstack([unigram_probs * lambda1 + np.asarray(m[token, :]).reshape(-1) * lambda2 for token in token_arr])
         assert (np.abs(np.sum(probs, axis=-1)-1) < 1e-5).all()
         assert probs.shape[1]==vocab_size
-        yield probs, None
+        yield probs, hidden_state
 
     ############################# REPLACE THIS WITH YOUR CODE #############################
