@@ -6,6 +6,7 @@ from collections import Counter
 
 from lm import train, next_proba_gen
 from score_lm import load_dataset, save_preds, score_preds
+import datetime
 
 PREDS_FNAME = 'preds.tsv'
 
@@ -137,6 +138,10 @@ def append_prediction(preds, cur_id, next_id, softmax, unigram_probs, id_to_word
     preds.append([cur_word] + top_k_words + [true_prob, true_rank] + kl_divergences)
 
 
+def datetime_str():
+    return datetime.datetime.now().ctime()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--ptb_path', default='PTB', help='Path to PTB data')
@@ -145,14 +150,19 @@ def main():
     raw_data = load_dataset(args.ptb_path)
     train_data, dev_data, test_data, word_to_id, id_to_word = raw_data
 
+    print(datetime_str(), 'Training model ...')
     model = train(train_data, word_to_id, id_to_word)
+    print(datetime_str(), 'Training model finished.')
     unigram_probs = train_unigram_model(train_data, word_to_id)
 
     allpreds = [['prev', 'pred1', 'pred2', 'pred3', 
                  'true_prob', 'true_rank', 'kl_uniform', 'kl_unigram']]
+
+    print(datetime_str(), 'Testing model ...')
     allpreds.extend(predict_probs(model, id_to_word, train_data, unigram_probs, 'train'))
     allpreds.extend(predict_probs(model, id_to_word, dev_data, unigram_probs, 'valid'))
     allpreds.extend(predict_probs(model, id_to_word, test_data, unigram_probs, 'test'))
+    print(datetime_str(), 'Testing model finished.')
 
     save_preds(allpreds, preds_fname=PREDS_FNAME)
 
