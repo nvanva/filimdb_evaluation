@@ -53,7 +53,11 @@ git clone https://github.com/nvanva/filimdb_evaluation.git
 
 4. Run evaluate_lm.py
     ```
-    python evaluate.py
+    python evaluate_lm.py evaluate --ptb-path='PTB'
     ```
-5. Load preds.tsv to ??? (coming soon).
-6. Load lm.py to  http://mdl.cs.msu.ru
+5. Sampling from lm
+    ```
+    python evaluate_lm.py sampling --size=20 --start-text='the meaning of life is'
+    ```
+6. Load preds.tsv to ??? (coming soon).
+7. Load lm.py to  http://mdl.cs.msu.ru

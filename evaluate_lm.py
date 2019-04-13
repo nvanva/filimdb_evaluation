@@ -66,7 +66,7 @@ def ancestral_sampling_batch(model,
 
     hidden = None
     for _ in range(size):
-        softmax, hidden = next(next_proba_gen([tokens[:, -1]], model, hidden=hidden))
+        softmax, hidden = next(next_proba_gen([tokens[:, -1]], model, hidden_state=hidden))
         softmax = softmax
         if temperature != 1.0:
             softmax = np.float_power(softmax, 1.0/temperature)
