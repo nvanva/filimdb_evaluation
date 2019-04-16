@@ -18,10 +18,8 @@ def main():
     else:
         part2xy = load_dataset_fast('FILIMDB', parts=('train', 'dev', 'test', 'train_unlabeled'))
         train_ids, train_texts, train_labels = part2xy['train']
-        _, dev_texts, _ = part2xy['dev']
-        _, test_texts, _ = part2xy['test']
         _, train_unlabeled_texts, _ = part2xy['train_unlabeled']
-        all_texts = train_texts + dev_texts  + train_unlabeled_texts + test_texts
+        all_texts = train_texts + train_unlabeled_texts 
         
         print('\nPretraining classifier on %d examples' % len(all_texts))
         st = time()
