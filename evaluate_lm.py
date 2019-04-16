@@ -9,7 +9,7 @@ from lm import train, next_proba_gen
 from score_lm import load_dataset, save_preds, score_preds
 import datetime
 
-PREDS_FNAME = 'preds.tsv'
+PREDS_FNAME = 'preds_lm.tsv'
 
 def datetime_str():
     return datetime.datetime.now().ctime()
