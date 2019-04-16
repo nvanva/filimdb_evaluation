@@ -22,7 +22,7 @@ def train(train_texts, train_labels, pretrain_params=None):
 
 def pretrain(texts):
    """
-   Pretrain classifier on unlabeled texts
+   Pretrain classifier on unlabeled texts. If your classifier cannot train on unlabeled data, skip this.
    :param texts: a list of texts (str objects), one str per example
    :return: learnt parameters, or any object you like (it will be passed to the train function)
    """
