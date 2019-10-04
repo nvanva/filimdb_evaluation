@@ -1,4 +1,4 @@
-# imdb_evaluation
+# Sentiment classification tasks
 
 1. Clone this repository:
 ```
@@ -44,7 +44,7 @@ python evaluate.py
 6. Upload classifier.py to http://mdl.cs.msu.ru
 
 
-# lm_evaluation
+# Language modeling tasks
 
 1. Clone this repository:
 ```
