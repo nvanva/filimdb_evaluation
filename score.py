@@ -4,7 +4,7 @@ import codecs
 import random
 
 random.seed(3)  # set random seed for each run of the script to produce the same results
-SCORED_PARTS = ('train', 'dev', 'test')
+SCORED_PARTS = ('train', 'dev', 'test', 'dev-b', 'test-b')
 
 
 def load_dataset_fast(data_dir='FILIMDB', parts=('train', 'dev', 'test')):
