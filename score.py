@@ -35,34 +35,35 @@ def load_dataset_fast(data_dir='FILIMDB', parts=('train', 'dev', 'test')):
     return part2xy
 
 
-def load_dataset(data_dir='ILIMDB', parts=('train', 'dev', 'test', 'train_unlabeled')):
-    """
-    Loads data from specified directory. Returns dictionary part->(list of texts, list of corresponding labels).
-    """
-    part2xy = {}  # tuple(list of texts, list of their labels) for train and test parts
-    for part in parts:
-        print('Loading %s set ' % part)
-
-        unlabeled_subdir = os.path.join(data_dir, part, 'unlabeled')
-        unlabeled = os.path.exists(unlabeled_subdir)
-        examples = []
-
-        if unlabeled:
-            load_dir(unlabeled_subdir, None, examples)
-        else:
-            for cls in ('pos', 'neg'):
-                subdir = os.path.join(data_dir, part, cls)
-                load_dir(subdir, cls, examples)
-        # shuffle examples: if the classifiers overfits to a particular order of labels,
-        # it will show bad results on dev/test set;
-        # train set should be shuffled by the train() function if the classifier can overfit to the order!
-        if part != 'train':
-            random.shuffle(examples)
-        ids, texts, labels = list(zip(*examples))  # convert list of (text,label) pairs to 2 parallel lists
-        part2xy[part] = (ids, texts, None) if unlabeled else (ids, texts, labels)
-        for cls in set(labels):
-            print(cls, sum((1 for l in labels if l == cls)))
-    return part2xy
+# def load_dataset(data_dir='ILIMDB', parts=('train', 'dev', 'test', 'train_unlabeled')):
+#     """
+#     Deprecated! Used  load_dataset_fast() instead!
+#     Loads data from specified directory. Returns dictionary part->(list of texts, list of corresponding labels).
+#     """
+#     part2xy = {}  # tuple(list of texts, list of their labels) for train and test parts
+#     for part in parts:
+#         print('Loading %s set ' % part)
+#
+#         unlabeled_subdir = os.path.join(data_dir, part, 'unlabeled')
+#         unlabeled = os.path.exists(unlabeled_subdir)
+#         examples = []
+#
+#         if unlabeled:
+#             load_dir(unlabeled_subdir, None, examples)
+#         else:
+#             for cls in ('pos', 'neg'):
+#                 subdir = os.path.join(data_dir, part, cls)
+#                 load_dir(subdir, cls, examples)
+#         # shuffle examples: if the classifiers overfits to a particular order of labels,
+#         # it will show bad results on dev/test set;
+#         # train set should be shuffled by the train() function if the classifier can overfit to the order!
+#         if part != 'train':
+#             random.shuffle(examples)
+#         ids, texts, labels = list(zip(*examples))  # convert list of (text,label) pairs to 2 parallel lists
+#         part2xy[part] = (ids, texts, None) if unlabeled else (ids, texts, labels)
+#         for cls in set(labels):
+#             print(cls, sum((1 for l in labels if l == cls)))
+#     return part2xy
 
 
 def load_dir(subdir, cls, examples):
@@ -104,10 +105,14 @@ def load_preds(preds_fname):
 
 
 def score_preds(preds_fname, data_dir='FILIMDB'):
+    part2xy = load_dataset_fast(data_dir=data_dir, parts=SCORED_PARTS)
+    return score_preds_loaded(part2xy, preds_fname)
+
+
+def score_preds_loaded(part2xy, preds_fname):
     pred_ids, pred_y = load_preds(preds_fname)
     pred_dict = {i: y for i, y in zip(pred_ids, pred_y)}
     scores = {}
-    part2xy = load_dataset_fast(data_dir=data_dir, parts=SCORED_PARTS)
     for part, (true_ids, _, true_y) in part2xy.items():
         if true_y is None:
             print('no labels for %s set' % part)
