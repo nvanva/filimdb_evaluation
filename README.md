@@ -1,4 +1,4 @@
-# imdb_evaluation
+# Sentiment classification tasks
 
 1. Clone this repository:
 ```
@@ -12,7 +12,14 @@ git clone https://github.com/nvanva/filimdb_evaluation.git
 
 3. create classifier.py and write the following functions:
 ```
-def train(texts, labels):
+def pretrain(texts):
+   """
+   Pretrain classifier on unlabeled texts. If your classifier cannot train on unlabeled data, skip this.
+   :param texts: a list of texts (str objects), one str per example
+   :return: learnt parameters, or any object you like (it will be passed to the train function)
+   """
+   
+def train(texts, labels, pretrain_params=None):
     """
     Trains classifier on the given train set represented as parallel lists of texts and corresponding labels.
     :param texts: a list of texts (str objects), one str per example
@@ -33,11 +40,13 @@ def classify(texts, params):
 python evaluate.py
 ```
 
-5. Upload preds.tsv to http://compai-msu.info/
-6. Upload classifier.py to http://mdl.cs.msu.ru
+5. Upload preds.tsv to http://compai-msu.info/.
+Register for the appropriate competition, you will receive an e-mail with submission instructions.
+6. Upload classifier to http://mdl.cs.msu.ru.
+Follow instructions at the appropriate Assignment Submission page there.
 
 
-# lm_evaluation
+# Language modeling tasks
 
 1. Clone this repository:
 ```
@@ -53,7 +62,11 @@ git clone https://github.com/nvanva/filimdb_evaluation.git
 
 4. Run evaluate_lm.py
     ```
-    python evaluate.py
+    python evaluate_lm.py evaluate --ptb-path='PTB'
     ```
-5. Load preds.tsv to ??? (coming soon).
-6. Load lm.py to  http://mdl.cs.msu.ru
+5. Sampling from lm
+    ```
+    python evaluate_lm.py sampling --size=20 --start-text='the meaning of life is'
+    ```
+6. Load preds.tsv to ??? (coming soon).
+7. Load lm.py to  http://mdl.cs.msu.ru

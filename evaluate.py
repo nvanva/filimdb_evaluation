@@ -1,6 +1,6 @@
 from time import time
 from classifier import train, classify  # classifier.py should be in the same directory
-from score import load_dataset_fast, score, save_preds, score_preds
+from score import load_dataset_fast, score, save_preds, score_preds, SCORED_PARTS
 
 PREDS_FNAME = 'preds.tsv'
 
@@ -9,19 +9,17 @@ def main():
     try:
         from classifier import pretrain
     except ImportError:
-        part2xy = load_dataset_fast('FILIMDB')
+        part2xy = load_dataset_fast('FILIMDB', parts=SCORED_PARTS)
         train_ids, train_texts, train_labels = part2xy['train']
         print('\nTraining classifier on %d examples from train set ...' % len(train_texts))
         st = time()
         params = train(train_texts, train_labels)
         print('Classifier trained in %.2fs' % (time() - st))
     else:
-        part2xy = load_dataset_fast('FILIMDB', parts=('train', 'dev', 'test', 'train_unlabeled'))
+        part2xy = load_dataset_fast('FILIMDB', parts=SCORED_PARTS+('train_unlabeled',))
         train_ids, train_texts, train_labels = part2xy['train']
-        _, dev_texts, _ = part2xy['dev']
-        _, test_texts, _ = part2xy['test']
         _, train_unlabeled_texts, _ = part2xy['train_unlabeled']
-        all_texts = train_texts + dev_texts  + train_unlabeled_texts + test_texts
+        all_texts = train_texts + train_unlabeled_texts 
         
         print('\nPretraining classifier on %d examples' % len(all_texts))
         st = time()
