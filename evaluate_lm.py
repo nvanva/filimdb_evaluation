@@ -76,7 +76,7 @@ class ProtectedTokenIterator(object):
         return next(self.it)
 
 
-def predict_probs(model, id_to_word, data, unigram_probs, name, top_k=3, bs=100):
+def predict_probs(model, id_to_word, data, unigram_probs, name, top_k=3, bs=10000):
     data = np.array(data)
     tail = len(data)//bs*bs
     X, X_tail = data[0:tail].reshape(bs, -1).T, data[tail:-1].reshape(1, -1).T  # X[i+1,j] is the next word after X[i,j]
