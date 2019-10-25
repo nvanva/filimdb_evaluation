@@ -20,7 +20,7 @@ else:
 
 
 def process_script(id_, type_, name, known_results):
-    from evaluate import main
+    from evaluate_ctrl import main
     key = id_ + "_" + type_
     if key not in known_results:
         # current_dir = os.getcwd()
@@ -28,6 +28,8 @@ def process_script(id_, type_, name, known_results):
         script_results = main()
         # os.chdir(current_dir)
         known_results[key] = script_results
+        known_results[key]["name"] = name
+
         with open(path_to_results, "w") as f:
             json.dump(dict(sorted(known_results.items())), f, indent=4)
         print("#" * 100)
