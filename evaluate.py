@@ -1,53 +1,84 @@
 from time import time
-from classifier import train, classify  # classifier.py should be in the same directory
-from score import load_dataset_fast, score, save_preds, score_preds, SCORED_PARTS
+import sys
+from score import load_dataset_fast, score, save_preds, score_preds
+import signal
+from contextlib import contextmanager
+import importlib
 
-PREDS_FNAME = 'preds.tsv'
+
+class TimeoutException(Exception): pass
 
 
-def main():
+@contextmanager
+def time_limit(seconds):
+    def signal_handler(signum, frame):
+        raise TimeoutException("Time limit exceeded")
+
+    signal.signal(signal.SIGALRM, signal_handler)
+    signal.alarm(seconds)
     try:
-        from classifier import pretrain
-    except ImportError:
-        part2xy = load_dataset_fast('FILIMDB', parts=SCORED_PARTS)
-        train_ids, train_texts, train_labels = part2xy['train']
-        print('\nTraining classifier on %d examples from train set ...' % len(train_texts))
-        st = time()
-        params = train(train_texts, train_labels)
-        print('Classifier trained in %.2fs' % (time() - st))
-    else:
-        part2xy = load_dataset_fast('FILIMDB', parts=SCORED_PARTS+('train_unlabeled',))
-        train_ids, train_texts, train_labels = part2xy['train']
-        _, train_unlabeled_texts, _ = part2xy['train_unlabeled']
-        all_texts = train_texts + train_unlabeled_texts 
-        
-        print('\nPretraining classifier on %d examples' % len(all_texts))
-        st = time()
-        params = pretrain(all_texts)
-        print('Classifier pretrained in %.2fs' % (time() - st))
-        print('\nTraining classifier on %d examples from train set ...' % len(train_texts))
-        st = time()
-        params = train(train_texts, train_labels, params)
-        print('Classifier trained in %.2fs' % (time() - st))
-        del part2xy["train_unlabeled"]
+        yield
+    finally:
+        signal.alarm(0)
+
+
+def main(package, file_name, train_timeout=60 * 60 * 100, eval_timeout=60 * 60 * 100):
+    results = {}
+    try:
+        module = importlib.import_module(f".{file_name}", package)
+        importlib.reload(module)
+    except Exception as e:
+        print(e)
+        results["exception"] = str(e)
+        if sys.modules.get("classifier"):
+            del sys.modules['classifier']
+        return results
+
+    part2xy = load_dataset_fast('FILIMDB')
+    train_ids, train_texts, train_labels = part2xy['train']
+
+    print('\nTraining classifier on %d examples from train set ...' % len(train_texts))
+    st = time()
+
+    try:
+        with time_limit(train_timeout):
+            params = module.train(train_texts, train_labels)
+    except (TimeoutException, ValueError, Exception) as e:
+        print(e)
+        if isinstance(e, TimeoutException):
+            results["train_time"] = train_timeout
+        results["exception"] = str(e)
+        return results
+
+    train_time = time() - st
+    results["train_time"] = train_time
+
+    print('Classifier trained in %.2fs' % train_time)
 
     allpreds = []
     for part, (ids, x, y) in part2xy.items():
         print('\nClassifying %s set with %d examples ...' % (part, len(x)))
         st = time()
-        preds = classify(x, params)
-        print('%s set classified in %.2fs' % (part, time() - st))
+        try:
+            with time_limit(eval_timeout):
+                preds = module.classify(x, params)
+        except (TimeoutException, Exception) as e:
+            if isinstance(e, TimeoutException):
+                print("Timeout on evaluating %s set!" % part)
+                results["eval_on_%s_set_time" % part] = eval_timeout
+            else:
+                print(e)
+            results["exception"] = str(e)
+            return results
+
+        eval_time = time() - st
+        results["eval_on_%s_set_time" % part] = eval_time
+        print('%s set classified in %.2fs' % (part, eval_time))
         allpreds.extend(zip(ids, preds))
 
         if y is None:
             print('no labels for %s set' % part)
         else:
-            score(preds, y)
-
-    save_preds(allpreds, preds_fname=PREDS_FNAME)
-    print('\nChecking saved predictions ...')
-    score_preds(preds_fname=PREDS_FNAME, data_dir='FILIMDB')
-
-
-if __name__ == '__main__':
-    main()
+            acc = score(preds, y)
+            results["eval_on_%s_set_acc" % part] = acc
+    return results
