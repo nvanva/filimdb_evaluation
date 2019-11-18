@@ -23,11 +23,11 @@ def time_limit(seconds):
         signal.alarm(0)
 
 
-def main(train_timeout=5 * 60, eval_timeout=5 * 60):
+def main(package, file_name, train_timeout=60 * 30, eval_timeout=60 * 30):
     results = {}
     try:
-        import classifier
-        importlib.reload(classifier)
+        module = importlib.import_module(f".{file_name}", package)
+        importlib.reload(module)
     except Exception as e:
         print(e)
         results["exception"] = str(e)
@@ -43,9 +43,9 @@ def main(train_timeout=5 * 60, eval_timeout=5 * 60):
 
     try:
         with time_limit(train_timeout):
-            params = classifier.train(train_texts, train_labels)
+            params = module.train(train_texts, train_labels)
     except (TimeoutException, ValueError, Exception) as e:
-        del sys.modules['classifier']
+        del sys.modules[module.__name__]
         print(e)
         if isinstance(e, TimeoutException):
             results["train_time"] = train_timeout
@@ -63,9 +63,9 @@ def main(train_timeout=5 * 60, eval_timeout=5 * 60):
         st = time()
         try:
             with time_limit(eval_timeout):
-                preds = classifier.classify(x, params)
+                preds = module.classify(x, params)
         except (TimeoutException, ValueError) as e:
-            del sys.modules['classifier']
+            del sys.modules[module.__name__]
             if isinstance(e, TimeoutException):
                 print("Timeout on evaluating %s set!" % part)
                 results["eval_on_%s_set_time" % part] = eval_timeout
@@ -84,7 +84,7 @@ def main(train_timeout=5 * 60, eval_timeout=5 * 60):
         else:
             acc = score(preds, y)
             results["eval_on_%s_set_acc" % part] = acc
-    del sys.modules['classifier']
+    del sys.modules[module.__name__]
     return results
 
 
