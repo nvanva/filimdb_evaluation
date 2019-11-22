@@ -37,7 +37,7 @@ def prepare_final_xls(final_results, results_folder):
     my_df.to_excel(results_folder / "results.xls")
 
 
-SOLUTION_REGEX = r"(?P<name>^[^_]*)_(?P<id>[0-9]{4,})_.*_(?P<type>\w*$)"
+SOLUTION_REGEX = r"(?P<name>^[^_]*)_(?P<id>[0-9]{4,})_.*_(?P<type>[\w-]*$)"
 
 if __name__ == "__main__":
 
@@ -70,7 +70,9 @@ if __name__ == "__main__":
         file_name = str(file_path.stem)
         if "__init__" in file_name:
             continue
-        student_name, student_id, submission_type = re.search(SOLUTION_REGEX, file_name).groups()
+        print(file_name, SOLUTION_REGEX)
+        matched = re.search(SOLUTION_REGEX, file_name).groups()
+        student_name, student_id, submission_type = matched
         print(file_name, student_name, student_id, submission_type, sep=', ')
         process_script(file_name=file_name, id_=student_id, type_=submission_type, name=student_name,
                        known_results=current_results,
