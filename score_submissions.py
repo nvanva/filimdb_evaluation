@@ -74,8 +74,8 @@ if __name__ == "__main__":
         matched = re.search(SOLUTION_REGEX, file_name).groups()
         student_name, student_id, submission_type = matched
         print(file_name, student_name, student_id, submission_type, sep=', ')
-#        process_script(file_name=file_name, id_=student_id, type_=submission_type, name=student_name,
-#                       known_results=current_results,
-#                       package=".".join(str(file_path).split("/")[:-1]),
-#                       path_to_results=results_folder / "results.json")
-#    prepare_final_xls(current_results, results_folder)
+        process_script(file_name=file_name, id_=student_id, type_=submission_type, name=student_name,
+                       known_results=current_results,
+                       package=".".join(str(file_path).split("/")[:-1]),
+                       path_to_results=results_folder / "results.json")
+    prepare_final_xls(current_results, results_folder)
