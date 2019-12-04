@@ -44,7 +44,7 @@ def main(package, file_name, train_timeout=60 * 30, eval_timeout=60 * 30):
     try:
         with time_limit(train_timeout):
             params = module.train(train_texts, train_labels)
-    except (TimeoutException, ValueError, Exception) as e:
+    except (TimeoutException, ValueError, BaseException) as e:
         del sys.modules[module.__name__]
         print(e)
         if isinstance(e, TimeoutException):
@@ -64,7 +64,7 @@ def main(package, file_name, train_timeout=60 * 30, eval_timeout=60 * 30):
         try:
             with time_limit(eval_timeout):
                 preds = module.classify(x, params)
-        except (TimeoutException, ValueError) as e:
+        except (TimeoutException, ValueError, BaseException) as e:
             del sys.modules[module.__name__]
             if isinstance(e, TimeoutException):
                 print("Timeout on evaluating %s set!" % part)
