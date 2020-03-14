@@ -39,10 +39,13 @@ def classify(texts, params):
 ```
 python evaluate.py
 ```
-
-5. Upload preds.tsv to http://compai-msu.info/.
+5. if you need to pretrain your model on all sets of texts (train, test, dev, unlabeled, dev-b, test-b), use --transductive command-line argument:
+```
+python evaluate.py --transductive
+```
+6. Upload preds.tsv to http://compai-msu.info/.
 Register for the appropriate competition, you will receive an e-mail with submission instructions.
-6. Upload your classifier following instructions at the appropriate Assignment Submission page.
+7. Upload your classifier following instructions at the appropriate Assignment Submission page.
 
 
 # Language modeling tasks
