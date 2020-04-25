@@ -73,7 +73,7 @@ git clone https://github.com/nvanva/filimdb_evaluation.git
 6. Load preds.tsv to ??? (coming soon).
 7. Load lm.py to  http://mdl.cs.msu.ru
 
-# Translitetation task
+# Transliteration task
 
 1. Clone this repository:
 ```
