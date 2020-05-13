@@ -7,7 +7,7 @@ import random
 import numpy as np
 
 random.seed(42)
-SCORED_PARTS = ('train', 'dev', 'train_small', 'dev_small')
+SCORED_PARTS = ('train', 'dev', 'train_small', 'dev_small', 'test')
 
 
 def load_dataset(data_dir_path=None, parts: List[str]=SCORED_PARTS):
@@ -15,12 +15,18 @@ def load_dataset(data_dir_path=None, parts: List[str]=SCORED_PARTS):
     for part in parts:
         path = os.path.join(data_dir_path, f'{part}.tsv')
         with open(path, 'r', encoding='utf-8') as rf:
-            strings, transliterations = [], []
             # first line is a header of the corresponding columns
-            for line in rf.readlines()[1:]:
-                src, translit = line.strip('\n').split('\t')
-                strings.append(src)
-                transliterations.append(translit)
+            lines = rf.readlines()[1:]
+            col_count = len(lines[0].strip('\n').split('\t'))
+            if col_count == 2:
+                strings, transliterations =\
+                    zip(*list(map(lambda l: l.strip('\n').split('\t'),
+                                lines)))
+            elif col_count == 1:
+                strings = list(map(lambda l: l.strip('\n'), lines))
+                transliterations = None
+            else:
+                raise ValueError("wrong amount of columns")
         part2ixy[part] = ([f'{part}/{i}' for i in range(len(strings))],
                             strings, transliterations)
     return part2ixy
