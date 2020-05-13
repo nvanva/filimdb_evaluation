@@ -85,9 +85,16 @@ git clone https://github.com/nvanva/filimdb_evaluation.git
 ./init.sh translit
 ```
 
-3. Check baseline implementation in translit.py and evaluate it:
+3. Check baseline implementation in translit\_baseline.py and evaluate it:
 ```
 python evaluate_translit.py
 ```
 
-4. Change baseline train and classify functions in translit.py with your implementation.
+4. Modify translit.py according to assignment description, change importing in evaluate\_translit.py from `from translit\_baseline import train, classify` to `from translit import train, classify`.
+
+5. Check results again:
+```
+python evaluate_translit.py
+```
+
+6. Upload preds.tsv file to the competition page: compai-msu.ru/c/translit_assignment/description 

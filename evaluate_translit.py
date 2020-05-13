@@ -2,7 +2,8 @@ from fire import Fire
 from time import time
 import numpy as np
 
-from translit import train, classify
+from translit_baseline import train, classify
+#from translit import train, classify
 from score_translit import load_dataset, score, save_preds, score_preds, SCORED_PARTS
 
 PREDS_FNAME = 'preds.tsv'
@@ -31,7 +32,8 @@ def main():
 
     save_preds(allpreds, preds_fname=PREDS_FNAME)
     print('\nChecking saved predictions ...')
-    score_preds(preds_path=PREDS_FNAME, data_dir=DATA_DIR)
+    score_preds(preds_path=PREDS_FNAME, data_dir=DATA_DIR,
+                parts=SCORED_PARTS)
 
 
 if __name__ == '__main__':
