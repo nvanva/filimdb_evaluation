@@ -7,7 +7,7 @@ import random
 import numpy as np
 
 random.seed(42)
-SCORED_PARTS = ('train', 'dev')
+SCORED_PARTS = ('train', 'dev', 'train_small', 'dev_small')
 
 
 def load_dataset(data_dir_path=None, parts: List[str]=SCORED_PARTS):
@@ -66,8 +66,8 @@ def score(preds, true):
         'acc@1': acc_1
         }
 
-def score_preds(preds_path, data_dir):
-    part2ixy = load_dataset(data_dir, parts=SCORED_PARTS)
+def score_preds(preds_path, data_dir, parts):
+    part2ixy = load_dataset(data_dir, parts=parts)
     pred_ids, pred_y = load_preds(preds_path)
     pred_dict = {i:y for i,y in zip(pred_ids, pred_y)}
     scores = {}
