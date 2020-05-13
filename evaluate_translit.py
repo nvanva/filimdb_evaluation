@@ -32,8 +32,7 @@ def main():
 
     save_preds(allpreds, preds_fname=PREDS_FNAME)
     print('\nChecking saved predictions ...')
-    score_preds(preds_path=PREDS_FNAME, data_dir=DATA_DIR,
-                parts=SCORED_PARTS)
+    score_preds(preds_path=PREDS_FNAME, data_dir=DATA_DIR, parts=SCORED_PARTS)
 
 
 if __name__ == '__main__':
