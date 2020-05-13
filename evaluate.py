@@ -1,3 +1,4 @@
+from fire import Fire
 from time import time
 from classifier import train, classify  # classifier.py should be in the same directory
 from score import load_dataset_fast, score, save_preds, score_preds, SCORED_PARTS
@@ -5,7 +6,7 @@ from score import load_dataset_fast, score, save_preds, score_preds, SCORED_PART
 PREDS_FNAME = 'preds.tsv'
 
 
-def main():
+def main(transductive: bool = False):
     try:
         from classifier import pretrain
     except ImportError:
@@ -19,10 +20,16 @@ def main():
         part2xy = load_dataset_fast('FILIMDB', parts=SCORED_PARTS+('train_unlabeled',))
         train_ids, train_texts, train_labels = part2xy['train']
         _, train_unlabeled_texts, _ = part2xy['train_unlabeled']
-        all_texts = train_texts + train_unlabeled_texts 
-        
-        print('\nPretraining classifier on %d examples' % len(all_texts))
+
         st = time()
+
+        if transductive:
+            all_texts = list(text for _, text, _ in part2xy.values())
+        else:
+            all_texts = [train_texts, train_unlabeled_texts]
+
+        total_texts = sum(len(text) for text in all_texts)
+        print('\nPretraining classifier on %d examples' % total_texts)
         params = pretrain(all_texts)
         print('Classifier pretrained in %.2fs' % (time() - st))
         print('\nTraining classifier on %d examples from train set ...' % len(train_texts))
@@ -50,4 +57,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    Fire(main)

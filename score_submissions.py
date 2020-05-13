@@ -37,7 +37,7 @@ def prepare_final_xls(final_results, results_folder):
     my_df.to_excel(results_folder / "results.xls")
 
 
-SOLUTION_REGEX = r"(?P<name>^[^_]*)(?:_LATE)?_(?P<id>[0-9]{4,})_.*_(?P<type>[\.\w-]*$)"
+SOLUTION_REGEX = r"(?P<name>^[^_]*)_(?:LATE_)?(?P<id>[0-9]{4,})_.*_(?P<type>[\w-]*$)"
 
 if __name__ == "__main__":
 
@@ -72,12 +72,17 @@ if __name__ == "__main__":
         except Exception as e:
             warning(str(e))
 
-    for index, file_path in enumerate(sorted(submissions_folder.glob("*.py"))):
+    for index, file_path in enumerate(sorted(submissions_folder.glob("*/*.py"))):
         file_name = str(file_path.stem)
         if "__init__" in file_name:
             continue
         print(file_name, SOLUTION_REGEX)
-        matched = re.search(SOLUTION_REGEX, file_name).groups()
+        matched = re.search(SOLUTION_REGEX, file_name)
+        if matched is None:
+            print(f"Couldn't match filename {file_name} with regex {SOLUTION_REGEX}")
+            continue
+        matched = matched.groups()
+
         student_name, student_id, submission_type = matched
         print(index, file_name, student_name, student_id, submission_type, sep=', ')
         if args.index is None or args.index == index:
