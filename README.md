@@ -90,7 +90,7 @@ git clone https://github.com/nvanva/filimdb_evaluation.git
 python evaluate_translit.py
 ```
 
-4. Modify translit.py according to assignment description, change importing in evaluate\_translit.py from `from translit\_baseline import train, classify` to `from translit import train, classify`.
+4. Modify translit.py according to assignment description, change importing in evaluate_translit.py from `from translit_baseline import train, classify` to `from translit import train, classify`.
 
 5. Check results again:
 ```
