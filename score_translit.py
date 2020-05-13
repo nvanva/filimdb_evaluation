@@ -72,7 +72,7 @@ def score(preds, true):
         'acc@1': acc_1
         }
 
-def score_preds(preds_path, data_dir, parts):
+def score_preds(preds_path, data_dir, parts=SCORED_PARTS):
     part2ixy = load_dataset(data_dir, parts=parts)
     pred_ids, pred_y = load_preds(preds_path)
     pred_dict = {i:y for i,y in zip(pred_ids, pred_y)}
