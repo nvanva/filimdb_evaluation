@@ -82,7 +82,7 @@ git clone https://github.com/nvanva/filimdb_evaluation.git
 
 2. run init.sh to prepare dataset:
 ```
-./init.sh translit
+./init.sh
 ```
 
 3. Check baseline implementation in translit\_baseline.py and evaluate it:
