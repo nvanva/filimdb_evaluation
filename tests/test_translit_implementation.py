@@ -4,6 +4,7 @@ from fire import Fire
 from translit import PositionalEncoding, LrScheduler, MultiHeadAttention,\
     compositional_mask
 
+
 def test_positional_encoding():
     pe = PositionalEncoding(max_len=3, hidden_size=4)
     res_1 = torch.tensor([[[ 0.0000,  1.0000,  0.0000,  1.0000],
@@ -12,6 +13,7 @@ def test_positional_encoding():
     # print(pe.pe - res_1)
     assert torch.all(torch.abs(pe.pe - res_1) < 1e-4).item()
     print('Test is passed!')
+
 
 def test_lr_scheduler():
     lrs_type = 'warmup,decay_linear'
@@ -24,6 +26,7 @@ def test_lr_scheduler():
     assert sch.learning_rate(step=50) - 166e-6 < 1e-6
     assert sch.learning_rate(step=100) - 0. < 1e-6
     print('Test is passed!')
+
 
 def test_multi_head_attention():
     mha = MultiHeadAttention(n_heads=1, hidden_size=5, dropout=None)
@@ -96,6 +99,7 @@ def test_multi_head_attention():
     assert torch.all(torch.abs(output - truth_output) < 1e-4).item()
     assert torch.all(torch.abs(attn_weights - truth_attn_weights) < 1e-4).item()
     print('Test is passed!')
+
 
 if __name__=='__main__':
     Fire()
