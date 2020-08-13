@@ -1,9 +1,11 @@
 from fire import Fire
 from time import time
+from pathlib import Path
+
 from classifier import train, classify  # classifier.py should be in the same directory
 from score import load_dataset_fast, score, save_preds, score_preds, SCORED_PARTS
 
-PREDS_FNAME = 'preds.tsv'
+PREDS_FNAME = Path(__file__).with_name("preds.tsv")
 
 
 def main(transductive: bool = False):

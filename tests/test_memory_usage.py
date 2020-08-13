@@ -23,6 +23,7 @@ def profile_function_memory(function, *args, **kwargs):
         returned_value = function(*args, **kwargs)
 
     used_memory_by_line = []
+    print(profiled.getvalue())
     for line in profiled.getvalue().split('\n')[4:]:
         if "MiB" in line:
             # extracting memory used after each line of "function" code
@@ -42,8 +43,9 @@ def test_score_memory_usage():
         FILIMDB_PATH.parent / "preds.tsv",
         FILIMDB_PATH,
     )
-    print(f"Memory used by IMDB evaluation: {used_memory}")
-    assert used_memory < 100
+    message = f"Memory used by IMDB evaluation: {used_memory}"
+    print(message)
+    assert used_memory < 100, message
 
 
 @profile
@@ -64,8 +66,9 @@ def test_score_lm_memory_usage():
         PTB_PATH.with_name("preds_lm.tsv"),
         PTB_PATH,
     )
-    print(f"Memory used by Language Model evaluation: {used_memory}")
-    assert used_memory < 100
+    message = f"Memory used by Language Model evaluation: {used_memory}"
+    print(message)
+    assert used_memory < 100, message
 
 
 @profile
@@ -85,5 +88,6 @@ def test_score_translit_memory_usage():
         TRANSLIT_PATH.with_name("preds_translit.tsv"),
         TRANSLIT_PATH,
     )
-    print(f"Memory used by Transliteration evaluation: {used_memory}")
-    assert used_memory < 100
+    message = f"Memory used by Transliteration evaluation: {used_memory}"
+    print(message)
+    assert used_memory < 100, message

@@ -57,7 +57,7 @@ def load_preds(preds_fname):
     """
     Load classifier predictions in format appropriate for scoring.
     """
-    with codecs.open(preds_fname,'r') as inp:
+    with codecs.open(preds_fname, 'r') as inp:
         pairs = [l.strip().split('\t') for l in inp.readlines()[1:]]
     prevs, preds1, preds2, preds3, true_probs, true_ranks, kl_uniform, kl_unigram = zip(*pairs)
 
