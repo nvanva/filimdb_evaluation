@@ -9,7 +9,7 @@ SCORED_PARTS = ('train', 'dev', 'test', 'dev-b', 'test-b')
 FILIMDB_PATH = Path(__file__).with_name("FILIMDB")
 
 
-def load_dataset_fast(data_dir='FILIMDB', parts=('train', 'dev', 'test')):
+def load_dataset_fast(data_dir=FILIMDB_PATH, parts=('train', 'dev', 'test')):
     """
     Loads data from specified directory. Returns dictionary part->(list of texts, list of corresponding labels).
     """
@@ -34,6 +34,25 @@ def load_dataset_fast(data_dir='FILIMDB', parts=('train', 'dev', 'test')):
             print('unlabeled', len(texts))
 
         part2xy[part] = (['%s/%d' % (part, i) for i in range(len(texts))], texts, labels)
+    return part2xy
+
+
+def load_labels_only(data_dir=FILIMDB_PATH, parts=('train', 'dev', 'test')):
+    """
+    Loads data from specified directory. Returns dictionary part->(list of corresponding labels).
+    """
+    part2xy = {}  # tuple(indexes, list of labels) for train and test parts
+    for part in parts:
+        print(f"Loading {part} set labels")
+        ypath = os.path.join(data_dir, f"{part}.labels")
+        if os.path.exists(ypath):
+            with codecs.open(ypath, 'r', encoding='utf-8') as inp:
+                labels = [s.strip() for s in inp.readlines()]
+            texts_number = len(labels)
+        else:
+            labels, texts_number = None, 0
+
+        part2xy[part] = (['%s/%d' % (part, i) for i in range(texts_number)], labels)
     return part2xy
 
 
@@ -106,16 +125,18 @@ def load_preds(preds_fname):
     return ids, preds
 
 
-def score_preds(preds_fname, data_dir='FILIMDB'):
-    part2xy = load_dataset_fast(data_dir=data_dir, parts=SCORED_PARTS)
-    return score_preds_loaded(part2xy, preds_fname)
+def score_preds(preds_fname, data_dir=FILIMDB_PATH):
+    part2labels = load_labels_only(data_dir=data_dir, parts=SCORED_PARTS)
+    return score_preds_loaded(part2labels, preds_fname)
 
 
-def score_preds_loaded(part2xy, preds_fname):
+def score_preds_loaded(part2labels, preds_fname):
     pred_ids, pred_y = load_preds(preds_fname)
     pred_dict = {i: y for i, y in zip(pred_ids, pred_y)}
+    del pred_ids
+    del pred_y
     scores = {}
-    for part, (true_ids, _, true_y) in part2xy.items():
+    for part, (true_ids, true_y) in part2labels.items():
         if true_y is None:
             print('no labels for %s set' % part)
             continue
