@@ -119,9 +119,12 @@ def load_preds(preds_fname):
     """
     Save classifier predictions in format appropriate for scoring.
     """
+    ids, preds = [], []
     with codecs.open(preds_fname, 'r') as inp:
-        pairs = [l.strip().split('\t') for l in inp.readlines()]
-    ids, preds = zip(*pairs)
+        for l in inp.readlines():
+            idx, pred = l.strip().split('\t')
+            ids.append(idx)
+            preds.append(pred)
     return ids, preds
 
 
@@ -133,8 +136,6 @@ def score_preds(preds_fname, data_dir=FILIMDB_PATH):
 def score_preds_loaded(part2labels, preds_fname):
     pred_ids, pred_y = load_preds(preds_fname)
     pred_dict = {i: y for i, y in zip(pred_ids, pred_y)}
-    del pred_ids
-    del pred_y
     scores = {}
     for part, (true_ids, true_y) in part2labels.items():
         if true_y is None:

@@ -5,9 +5,26 @@ from memory_profiler import profile
 from pathlib import Path
 import subprocess
 
+import score
+import score_lm
+import score_translit
+
 from score import score_preds, FILIMDB_PATH
 from score_lm import score_preds as score_preds_lm, PTB_PATH
 from score_translit import score_preds as score_preds_translit, TRANSLIT_PATH
+
+score_preds = profile(score_preds)
+score.load_labels_only = profile(score.load_labels_only)
+score.score_preds_loaded = profile(score.score_preds_loaded)
+score.load_preds = profile(score.load_preds)
+
+score_preds_lm = profile(score_preds_lm)
+score_lm.load_preds = profile(score_lm.load_preds)
+
+score_preds_translit = profile(score_preds_translit)
+score_translit.load_preds = profile(score_translit.load_preds)
+score_translit.load_dataset = profile(score_translit.load_dataset)
+score_translit.score = profile(score_translit.score)
 
 
 def profile_function_memory(function, *args, **kwargs):
@@ -32,25 +49,15 @@ def profile_function_memory(function, *args, **kwargs):
     return returned_value, max(used_memory_by_line) - used_memory_by_line[0]
 
 
-@profile
-def score_memory_profiler(*args, **kwargs):
-    return score_preds(*args, **kwargs)
-
-
 def test_score_memory_usage():
     scoring_result, used_memory = profile_function_memory(
-        score_memory_profiler,
+        score_preds,
         FILIMDB_PATH.parent / "preds.tsv",
         FILIMDB_PATH,
     )
     message = f"Memory used by IMDB evaluation: {used_memory}"
     print(message)
     assert used_memory < 100, message
-
-
-@profile
-def score_lm_memory_profiler(*args, **kwargs):
-    return score_preds_lm(*args, **kwargs)
 
 
 def test_score_lm_memory_usage():
@@ -62,18 +69,13 @@ def test_score_lm_memory_usage():
         ])
 
     scoring_result, used_memory = profile_function_memory(
-        score_lm_memory_profiler,
+        score_preds_lm,
         PTB_PATH.with_name("preds_lm.tsv"),
         PTB_PATH,
     )
     message = f"Memory used by Language Model evaluation: {used_memory}"
     print(message)
     assert used_memory < 100, message
-
-
-@profile
-def score_translit_memory_profiler(*args, **kwargs):
-    return score_preds_translit(*args, **kwargs)
 
 
 def test_score_translit_memory_usage():
@@ -84,7 +86,7 @@ def test_score_translit_memory_usage():
         ])
 
     scoring_result, used_memory = profile_function_memory(
-        score_translit_memory_profiler,
+        score_preds_translit,
         TRANSLIT_PATH.with_name("preds_translit.tsv"),
         TRANSLIT_PATH,
     )
