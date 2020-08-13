@@ -1,13 +1,13 @@
-from time import time
 from typing import List
 import os
-import collections
 import codecs
 import random
 import numpy as np
+from pathlib import Path
 
 random.seed(42)
 SCORED_PARTS = ('train', 'dev', 'train_small', 'dev_small', 'test')
+TRANSLIT_PATH = Path(__file__).with_name("TRANSLIT")
 
 
 def load_dataset(data_dir_path=None, parts: List[str]=SCORED_PARTS):
@@ -19,16 +19,18 @@ def load_dataset(data_dir_path=None, parts: List[str]=SCORED_PARTS):
             lines = rf.readlines()[1:]
             col_count = len(lines[0].strip('\n').split('\t'))
             if col_count == 2:
-                strings, transliterations =\
-                    zip(*list(map(lambda l: l.strip('\n').split('\t'),
-                                lines)))
+                strings, transliterations = zip(
+                    *list(map(lambda l: l.strip('\n').split('\t'), lines))
+                )
             elif col_count == 1:
                 strings = list(map(lambda l: l.strip('\n'), lines))
                 transliterations = None
             else:
                 raise ValueError("wrong amount of columns")
-        part2ixy[part] = ([f'{part}/{i}' for i in range(len(strings))],
-                            strings, transliterations)
+        part2ixy[part] = (
+            [f'{part}/{i}' for i in range(len(strings))],
+            strings, transliterations,
+        )
     return part2ixy
 
 
@@ -56,21 +58,24 @@ def load_preds(preds_fname, top_k=1):
     assert np.all(np.array(count_of_predictions) == top_k)
     return pred_ids, pred_y
 
+
 def compute_hit_k(preds, k=10):
     raise NotImplementedError
+
 
 def compute_mrr(preds):
     raise NotImplementedError
 
+
 def compute_acc_1(preds, true):
     return sum(np.array(preds)[:,0] == np.array(true)) / len(preds)
+
 
 def score(preds, true):
     assert len(preds) == len(true), 'inconsistent amount of predictions and ground truth answers'
     acc_1 = compute_acc_1(preds, true)
-    return {
-        'acc@1': acc_1
-        }
+    return {'acc@1': acc_1}
+
 
 def score_preds(preds_path, data_dir, parts=SCORED_PARTS):
     part2ixy = load_dataset(data_dir, parts=parts)

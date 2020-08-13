@@ -1,18 +1,20 @@
 import fire
-import argparse
 import numpy as np
 from tqdm import tqdm
 from itertools import chain
 from collections import Counter
+from pathlib import Path
 
 from lm import train, next_proba_gen
-from score_lm import load_dataset, save_preds, score_preds
+from score_lm import load_dataset, save_preds, score_preds, PTB_PATH
 import datetime
 
-PREDS_FNAME = 'preds_lm.tsv'
+PREDS_FNAME = Path(__file__).with_name("preds_lm.tsv")
+
 
 def datetime_str():
     return datetime.datetime.now().ctime()
+
 
 class ProtectedTokenIterator(object):
     """
@@ -32,6 +34,7 @@ class ProtectedTokenIterator(object):
         self.allow_next = False
         return next(self.it)
 
+
 def compute_kl_divergence(P, Q, is_uniform=False):
     eps = 1e-5
     P_mod = P + eps
@@ -44,8 +47,10 @@ def compute_kl_divergence(P, Q, is_uniform=False):
 
     return divergence
 
+
 def normalize(x):
     return x / x.sum(axis=-1)
+
 
 def ancestral_sampling_batch(model, 
                              unigram_probs, 
@@ -157,7 +162,7 @@ class Evaluator:
         preds.append([cur_word] + top_k_words + [true_prob, true_rank] + kl_divergences)
 
     def sampling(self, size, 
-                 ptb_path='PTB', 
+                 ptb_path=PTB_PATH,
                  start_text=None, 
                  batch_size=20,
                  temperature=1.0, 
@@ -195,7 +200,7 @@ class Evaluator:
 
         print('\n'.join(generated_texts))
 
-    def evaluate(self, ptb_path='PTB'):
+    def evaluate(self, ptb_path=PTB_PATH):
         raw_data = load_dataset(ptb_path)
         train_data, dev_data, test_data, word_to_id, id_to_word = raw_data
 
@@ -221,6 +226,7 @@ class Evaluator:
             for metric, value in method_scores.items():
                 print('{} {}: {}'.format(method_name.capitalize(), metric, value))
             print()
+
 
 if __name__=='__main__':
     fire.Fire(Evaluator)
