@@ -57,21 +57,28 @@ def load_preds(preds_fname):
     """
     Load classifier predictions in format appropriate for scoring.
     """
+    prevs = []
     with codecs.open(preds_fname, 'r') as inp:
-        pairs = [l.strip().split('\t') for l in inp.readlines()[1:]]
-    prevs, preds1, preds2, preds3, true_probs, true_ranks, kl_uniform, kl_unigram = zip(*pairs)
+        for l in inp.readlines()[1:]:
+            prevs.append(l.strip().split('\t', 1)[0])
 
-    true_probs = np.array(true_probs, dtype=np.float32)
-    true_ranks = np.array(true_ranks, dtype=np.int32)
-    kl_uniform = np.array(kl_uniform, dtype=np.float32)
-    kl_unigram = np.array(kl_unigram, dtype=np.float32)
+    true_probs = np.zeros(len(prevs), dtype=np.float32)
+    true_ranks = np.zeros(len(prevs), dtype=np.int32)
+    kl_uniform = np.zeros(len(prevs), dtype=np.float32)
+    kl_unigram = np.zeros(len(prevs), dtype=np.float32)
+    with codecs.open(preds_fname, 'r') as inp:
+        for i, l in enumerate(inp.readlines()[1:]):
+            true_prob, true_rank, kl_uniform_, kl_unigram_ = l.strip().rsplit('\t', 4)[-4:]
+            true_probs[i] = np.float32(true_prob)
+            true_ranks[i] = np.int32(true_rank)
+            kl_uniform[i] = np.float32(kl_uniform_)
+            kl_unigram[i] = np.float32(kl_unigram_)
 
-    return prevs, preds1, preds2, preds3, true_probs, true_ranks, kl_uniform, kl_unigram
+    return prevs, true_probs, true_ranks, kl_uniform, kl_unigram
 
 
 def compute_perplexity(probs):
-    perplexity = np.exp(-np.log(probs).sum() / len(probs))
-    return perplexity
+    return np.exp(-np.log(probs).sum() / len(probs))
 
 
 def compute_hit_k(ranks, k=10):
@@ -89,7 +96,7 @@ def compute_average_kl(kl_divergence):
 
 def score_preds(preds_path, ptb_path=PTB_PATH):
     data = load_preds(preds_path)
-    recieved_text, preds1, preds2, preds3, probs, ranks, kl_uniform, kl_unigram = data
+    recieved_text, probs, ranks, kl_uniform, kl_unigram = data
 
     train_path = os.path.join(ptb_path, "ptb.train.txt")
     dev_path = os.path.join(ptb_path, "ptb.valid.txt")
