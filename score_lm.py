@@ -2,6 +2,7 @@ import os
 import collections
 import codecs
 import numpy as np
+from pandas import read_csv
 from pathlib import Path
 
 PTB_PATH = Path(__file__).with_name("PTB")
@@ -57,22 +58,21 @@ def load_preds(preds_fname):
     """
     Load classifier predictions in format appropriate for scoring.
     """
-    prevs = []
-    with codecs.open(preds_fname, 'r') as inp:
-        for l in inp.readlines()[1:]:
-            prevs.append(l.strip().split('\t', 1)[0])
 
-    true_probs = np.zeros(len(prevs), dtype=np.float32)
-    true_ranks = np.zeros(len(prevs), dtype=np.int32)
-    kl_uniform = np.zeros(len(prevs), dtype=np.float32)
-    kl_unigram = np.zeros(len(prevs), dtype=np.float32)
-    with codecs.open(preds_fname, 'r') as inp:
-        for i, l in enumerate(inp.readlines()[1:]):
-            true_prob, true_rank, kl_uniform_, kl_unigram_ = l.strip().rsplit('\t', 4)[-4:]
-            true_probs[i] = np.float32(true_prob)
-            true_ranks[i] = np.int32(true_rank)
-            kl_uniform[i] = np.float32(kl_uniform_)
-            kl_unigram[i] = np.float32(kl_unigram_)
+    df = read_csv(
+        preds_fname, sep='\t', float_precision="high",
+        usecols=["prev", "true_prob", "true_rank", "kl_uniform", "kl_unigram"]
+    )
+    prevs = df["prev"].to_list()
+    del df["prev"]
+    true_probs = np.float32(df["true_prob"])
+    del df["true_prob"]
+    true_ranks = np.int32(df["true_rank"])
+    del df["true_rank"]
+    kl_uniform = np.float32(df["kl_uniform"])
+    del df["kl_uniform"]
+    kl_unigram = np.float32(df["kl_unigram"])
+    del df["kl_unigram"]
 
     return prevs, true_probs, true_ranks, kl_uniform, kl_unigram
 
@@ -98,27 +98,26 @@ def score_preds(preds_path, ptb_path=PTB_PATH):
     data = load_preds(preds_path)
     recieved_text, probs, ranks, kl_uniform, kl_unigram = data
 
-    train_path = os.path.join(ptb_path, "ptb.train.txt")
-    dev_path = os.path.join(ptb_path, "ptb.valid.txt")
-    test_path = os.path.join(ptb_path, "ptb.test.txt")
+    with open(os.path.join(ptb_path, "ptb.train.txt"), "r") as f:
+        train_text = f.read().strip().replace("\n", "<eos>")
 
-    train_text = _read_words(train_path)[:-1]
-    dev_text = _read_words(dev_path)[:-1]
-    test_text = _read_words(test_path)[:-1]
+    with open(os.path.join(ptb_path, "ptb.valid.txt"), "r") as f:
+        dev_text = f.read().strip().replace("\n", "<eos>")
+
+    with open(os.path.join(ptb_path, "ptb.test.txt"), "r") as f:
+        test_text = f.read().strip().replace("\n", "<eos>")
 
     ptb_dataset = [
-        ('train', train_text),
-        ('valid', dev_text),
-        ('test', test_text),
+        ('train', train_text, train_text.count(" ") + 1),
+        ('valid', dev_text, dev_text.count(" ") + 1),
+        ('test', test_text, test_text.count(" ") + 1),
     ]
 
     scores = dict()
-    for name, text in ptb_dataset:
-        len_text = len(text)
-
+    for name, text, len_text in ptb_dataset:
         # Check text is PTB
-        if ' '.join(recieved_text[:len_text]) != ' '.join(text):
-            raise Exception('Received text does not match PTB text')
+        if ' '.join(recieved_text[:len_text]) != text:
+            raise Exception(f'Received text does not match PTB text')
 
         # Perplexity calculation
         perplexity = compute_perplexity(probs[:len_text])  
