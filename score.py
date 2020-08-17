@@ -3,6 +3,7 @@ from pathlib import Path
 import os
 import codecs
 import random
+from pandas import read_csv
 
 random.seed(3)  # set random seed for each run of the script to produce the same results
 SCORED_PARTS = ('train', 'dev', 'test', 'dev-b', 'test-b')
@@ -51,7 +52,6 @@ def load_labels_only(data_dir=FILIMDB_PATH, parts=('train', 'dev', 'test')):
             texts_number = len(labels)
         else:
             labels, texts_number = None, 0
-
         part2xy[part] = (['%s/%d' % (part, i) for i in range(texts_number)], labels)
     return part2xy
 
@@ -119,13 +119,8 @@ def load_preds(preds_fname):
     """
     Save classifier predictions in format appropriate for scoring.
     """
-    ids, preds = [], []
-    with codecs.open(preds_fname, 'r') as inp:
-        for l in inp.readlines():
-            idx, pred = l.strip().split('\t')
-            ids.append(idx)
-            preds.append(pred)
-    return ids, preds
+    df = read_csv(preds_fname, names=["id", "pred"], sep='\t')
+    return df["id"].to_list(), df["pred"].to_list()
 
 
 def score_preds(preds_fname, data_dir=FILIMDB_PATH):

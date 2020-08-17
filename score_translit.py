@@ -4,6 +4,7 @@ import codecs
 import random
 import numpy as np
 from pathlib import Path
+from pandas import read_csv
 
 random.seed(42)
 SCORED_PARTS = ('train', 'dev', 'train_small', 'dev_small', 'test')
@@ -70,15 +71,21 @@ def load_preds(preds_fname, top_k=1):
     """
     Load classifier predictions in format appropriate for scoring.
     """
-    pred_ids, pred_y = [], []
-    with codecs.open(preds_fname,'r') as rf:
-        for line in rf.readlines():
-            splitted = line.strip('\n').split('\t')
-            pred_id, top_predictions = splitted[0], splitted[1:]
-            pred_ids.append(pred_id)
-            pred_y.append(top_predictions)
-    for y in pred_y:
-        assert len(y) == top_k
+    kwargs = {
+        "filepath_or_buffer": preds_fname,
+        "names": ["id", "pred"],
+        "sep": '\t',
+    }
+
+    pred_ids = read_csv(**kwargs, usecols=["id"])["id"].to_list()
+
+    pred_y = {
+        pred_id: y
+        for pred_id, y in zip(
+            pred_ids, read_csv(**kwargs, usecols=["pred"])["pred"]
+        )
+    }
+
     return pred_ids, pred_y
 
 
@@ -106,8 +113,8 @@ def score(preds, true):
 
 def score_preds(preds_path, data_dir, parts=SCORED_PARTS):
     part2iy = load_transliterations_only(data_dir, parts=parts)
-    pred_ids, pred_y = load_preds(preds_path)
-    pred_dict = {i:y for i,y in zip(pred_ids, pred_y)}
+    pred_ids, pred_dict = load_preds(preds_path)
+    # pred_dict = {i:y for i,y in zip(pred_ids, pred_y)}
     scores = {}
     for part, (true_ids, true_y) in part2iy.items():
         if true_y is None:

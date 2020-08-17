@@ -58,22 +58,12 @@ def load_preds(preds_fname):
     """
     Load classifier predictions in format appropriate for scoring.
     """
-
-    df = read_csv(
-        preds_fname, sep='\t', float_precision="high",
-        usecols=["prev", "true_prob", "true_rank", "kl_uniform", "kl_unigram"]
-    )
-    prevs = df["prev"].to_list()
-    del df["prev"]
-    true_probs = np.float32(df["true_prob"])
-    del df["true_prob"]
-    true_ranks = np.int32(df["true_rank"])
-    del df["true_rank"]
-    kl_uniform = np.float32(df["kl_uniform"])
-    del df["kl_uniform"]
-    kl_unigram = np.float32(df["kl_unigram"])
-    del df["kl_unigram"]
-
+    # reading data by columns is necessary to use less memory (for low resource server)
+    prevs = read_csv(preds_fname, sep='\t', usecols=["prev"])["prev"].to_list()
+    true_probs = np.float32(read_csv(preds_fname, sep='\t', usecols=["true_prob"])["true_prob"])
+    true_ranks = np.int32(read_csv(preds_fname, sep='\t', usecols=["true_rank"])["true_rank"])
+    kl_uniform = np.float32(read_csv(preds_fname, sep='\t', usecols=["kl_uniform"])["kl_uniform"])
+    kl_unigram = np.float32(read_csv(preds_fname, sep='\t', usecols=["kl_unigram"])["kl_unigram"])
     return prevs, true_probs, true_ranks, kl_uniform, kl_unigram
 
 

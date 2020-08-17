@@ -46,7 +46,7 @@ def profile_function_memory(function, *args, **kwargs):
             # extracting memory used after each line of "function" code
             used_memory, _ = re.findall(r"(\d+\.\d+) MiB", line)
             used_memory_by_line.append(float(used_memory))
-    return returned_value, max(used_memory_by_line) - used_memory_by_line[0]
+    return returned_value, max(used_memory_by_line) - min(used_memory_by_line)
 
 
 def test_score_memory_usage():
@@ -57,7 +57,7 @@ def test_score_memory_usage():
     )
     message = f"Memory used by IMDB evaluation: {used_memory}"
     print(message)
-    assert used_memory < 100, message
+    assert used_memory < 20, message
 
 
 def test_score_lm_memory_usage():
@@ -75,7 +75,7 @@ def test_score_lm_memory_usage():
     )
     message = f"Memory used by Language Model evaluation: {used_memory}"
     print(message)
-    assert used_memory < 100, message
+    assert used_memory < 60, message
 
 
 def test_score_translit_memory_usage():
@@ -92,4 +92,4 @@ def test_score_translit_memory_usage():
     )
     message = f"Memory used by Transliteration evaluation: {used_memory}"
     print(message)
-    assert used_memory < 100, message
+    assert used_memory < 75, message
