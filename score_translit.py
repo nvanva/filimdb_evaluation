@@ -77,14 +77,17 @@ def load_preds(preds_fname, top_k=1):
         "sep": '\t',
     }
 
-    pred_ids = read_csv(**kwargs, usecols=["id"])["id"].to_list()
+    pred_ids = list(read_csv(**kwargs, usecols=["id"])["id"])
 
     pred_y = {
-        pred_id: y
+        pred_id: [y]
         for pred_id, y in zip(
             pred_ids, read_csv(**kwargs, usecols=["pred"])["pred"]
         )
     }
+
+    for y in pred_y.values():
+        assert len(y) == top_k
 
     return pred_ids, pred_y
 

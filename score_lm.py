@@ -59,7 +59,7 @@ def load_preds(preds_fname):
     Load classifier predictions in format appropriate for scoring.
     """
     # reading data by columns is necessary to use less memory (for low resource server)
-    prevs = read_csv(preds_fname, sep='\t', usecols=["prev"])["prev"].to_list()
+    prevs = list(read_csv(preds_fname, sep='\t', usecols=["prev"])["prev"])
     true_probs = np.float32(read_csv(preds_fname, sep='\t', usecols=["true_prob"])["true_prob"])
     true_ranks = np.int32(read_csv(preds_fname, sep='\t', usecols=["true_rank"])["true_rank"])
     kl_uniform = np.float32(read_csv(preds_fname, sep='\t', usecols=["kl_uniform"])["kl_uniform"])

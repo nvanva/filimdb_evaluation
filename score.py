@@ -120,7 +120,7 @@ def load_preds(preds_fname):
     Save classifier predictions in format appropriate for scoring.
     """
     df = read_csv(preds_fname, names=["id", "pred"], sep='\t')
-    return df["id"].to_list(), df["pred"].to_list()
+    return list(df["id"]), list(df["pred"])
 
 
 def score_preds(preds_fname, data_dir=FILIMDB_PATH):
