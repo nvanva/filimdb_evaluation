@@ -67,16 +67,20 @@ def load_russe_labels(
 
 
 def load_dataset(
-    dataset: str
+    dataset: str,
 ) -> Tuple[Dict[str, Tuple[List[int], List, List, List]], str]:
     if dataset == "bts-rnc":
         return load_bts_rnc_dataset()
     raise ValueError(f'Dataset "{dataset}" is not available')
 
 
-def load_labels(dataset: str) -> Dict[str, Tuple[List[int], List[str], List[str]]]:
+def load_labels(
+    dataset: str,
+    data_path: Path = DATA_DIR,
+    parts: Tuple[str] = ("train", "test"),
+) -> Dict[str, Tuple[List[int], List[str], List[str]]]:
     if dataset == "bts-rnc":
-        return load_russe_labels(BTSRNC)
+        return load_russe_labels(data_path / dataset, parts=parts)
     raise ValueError(f'Dataset "{dataset}" is not available')
 
 

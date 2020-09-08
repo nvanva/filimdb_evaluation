@@ -1,10 +1,10 @@
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from itertools import groupby
 import pandas as pd
 from sklearn.metrics import adjusted_rand_score
 
-from wsi.dataset import load_labels
+from wsi.dataset import load_labels, DATA_DIR
 
 
 def score_part(
@@ -33,7 +33,10 @@ def score_part(
 
 
 def score_preds(
-    dataset: str, preds_fname: Path
+    dataset: str,
+    preds_fname: Path,
+    data_path: Path = DATA_DIR,
+    parts: Tuple[str] = ("train", "test"),
 ) -> Dict[str, Dict[str, float]]:
     """
     Scores predicted labels from the "preds_fname" file.
@@ -44,7 +47,7 @@ def score_preds(
     """
     df = pd.read_csv(preds_fname)
     idx2label = {r.context_id: r.predicted_label for _, r in df.iterrows()}
-    part2labels = load_labels(dataset)
+    part2labels = load_labels(dataset, data_path=data_path, parts=parts)
     part2scores = dict()
     for part, data in part2labels.items():
         context_idxs, gold_labels, target_words = data
