@@ -4,7 +4,7 @@ from itertools import groupby
 import pandas as pd
 from sklearn.metrics import adjusted_rand_score
 
-from dataset import load_labels, DATA_DIR
+from wsi.dataset import load_labels, DATA_DIR
 
 
 def score_part(
