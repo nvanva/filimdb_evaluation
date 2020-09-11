@@ -17,7 +17,7 @@ def cluster_target_word_instances(
     language: str = "ru",
 ) -> List[str]:
     """
-    Contexts clustering according to the meaning of the target_word.
+    Clustering sentences according to meanings of the target_word.
     :param sentences: list of sentences that contain the same target word (target_word_lemma)
     :param target_positions: list of target word positions
         Position example: '110-114'
