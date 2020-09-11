@@ -5,7 +5,6 @@ from itertools import groupby
 from collections import OrderedDict
 import pandas as pd
 from sklearn.metrics import adjusted_rand_score
-from nltk import word_tokenize
 
 DATA_DIR = Path(__file__).resolve().with_name("WSI")
 BTSRNC = DATA_DIR / "bts-rnc"
@@ -26,20 +25,14 @@ def load_bts_rnc_dataset(
     part2data = OrderedDict()
     for part in parts:
         df = pd.read_csv(data_path / f"{part}.csv", sep="\t", encoding="utf-8")
-        target_words, tokens_lists, target_idxs, context_idxs = [], [], [], []
-        for _, row in df.iterrows():
-            tokens = word_tokenize(row.context)
-            l, r = (idx for idx in row.positions.split(",", 1)[0].split("-"))
-            word = row.context[int(l): int(r) + 1]
-
-            target_words.append(row.word)
-            tokens_lists.append(tokens)
-            target_idxs.append(
-                next(i for i, t in enumerate(tokens) if word in t)
-            )
-            context_idxs.append(row.context_id)
-
-        part2data[part] = (context_idxs, target_words, tokens_lists, target_idxs)
+        target_words = df.word.tolist()
+        sentences = df.context.tolist()
+        target_positions = df.positions.tolist()
+        context_idxs = df.context_id.tolist()
+        assert all("," not in pos for pos in target_positions), \
+            f"BTS-RNC dataset shouldn't contain positions " \
+            f"for many target words in the same sentence"
+        part2data[part] = (context_idxs, target_words, sentences, target_positions)
 
     return part2data, RU
 
@@ -56,11 +49,9 @@ def load_russe_labels(
             dtype={"gold_sense_id": str},
             usecols=["context_id", "gold_sense_id", "word"],
         )
-        context_idxs, labels, target_words = [], [], []
-        for _, row in df.iterrows():
-            context_idxs.append(row.context_id)
-            labels.append(row.gold_sense_id)
-            target_words.append(row.word)
+        context_idxs = df.context_id.tolist()
+        labels = df.gold_sense_id.tolist()
+        target_words = df.word.tolist()
         if part in ("test",):
             labels = None
         part2labels[part] = (context_idxs, labels, target_words)
@@ -69,7 +60,14 @@ def load_russe_labels(
 
 def load_dataset(
     dataset: str,
-) -> Tuple[Dict[str, Tuple[List[int], List, List, List]], str]:
+) -> Tuple[Dict[str, Tuple[List[int], List[str], List[str], List[str]]], str]:
+    """
+    Loads data of a specific dataset
+    :param dataset: Dataset name. For example "bts-rnc".
+    :return: Data and its language. Where data is a python dict that maps
+        a dataset part ("train" or "test" ...) to
+        (context indexes, target words, sentences, target positions)
+    """
     if dataset == "bts-rnc":
         return load_bts_rnc_dataset()
     raise ValueError(f'Dataset "{dataset}" is not available')
@@ -145,6 +143,8 @@ def score_preds(
     :param dataset: dataset whose labels will be compared
         with the labels from the "preds_fname" file.
     :param preds_fname: file that contains predicted labels
+    :param data_path: path to directory that contains dataset
+    :param parts: which parts of the dataset should be scored
     :return: dict of scores for each part of the dataset
     """
     df = pd.read_csv(preds_fname)

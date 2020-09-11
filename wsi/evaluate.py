@@ -1,16 +1,20 @@
+import sys
 import logging
 from fire import Fire
 from pathlib import Path
 
-from clusterizer import cluster_sentences
-from score import score_preds, load_dataset, save_preds
+FILIMDB_PATH = Path(__file__).resolve().parent.parent
+sys.path.append(str(FILIMDB_PATH))
+
+from wsi.clusterizer import cluster_sentences
+from wsi.score import score_preds, load_dataset, save_preds
 
 
 def evaluate(dataset: str = "bts-rnc"):
     logging.basicConfig(
-        format="%(asctime)-12s %(message)s",
+        format="%(asctime)-16s %(message)s",
         level=logging.INFO,
-        datefmt="%d:%m:%Y %H:%M:%S",
+        datefmt="%d/%m-%H:%M:%S",
     )
 
     logging.info(f"Loading '{dataset}' dataset")
@@ -21,11 +25,11 @@ def evaluate(dataset: str = "bts-rnc"):
 
     num_instances = 0
     for part, data in part2data.items():
-        context_idxs, target_words, tokens_lists, target_idxs = data
+        context_idxs, target_words, sentences, target_positions = data
         num_instances += len(target_words)
         logging.info(f"Clustering {len(target_words)} instances of '{part}' part")
         labels = cluster_sentences(
-            target_words, tokens_lists, target_idxs, language
+            target_words, sentences, target_positions, language
         )
         logging.info(f"Part '{part}' clustered")
         assert len(labels) == len(context_idxs), \

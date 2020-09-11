@@ -1,60 +1,82 @@
+import re
 from itertools import groupby
 from typing import List
 from random import randint
 
 
+def tokenize(sentence: str):
+    # ############################ REPLACE THIS WITH YOUR CODE #############################
+    return re.findall(r"(\w+)", sentence)
+    # ############################ REPLACE THIS WITH YOUR CODE #############################
+
+
 def cluster_target_word_instances(
-    tokens_lists: List[List[str]],
-    target_idxs: List[int],
-    target_word: str,
+    sentences: List[str],
+    target_positions: List[str],
+    target_word_lemma: str,
     language: str = "ru",
 ) -> List[str]:
     """
-    Clusters tokens_lists according to the meaning of the target_word.
-    :param tokens_lists: lists of tokens
-    :param target_idxs: lists of target word indexes
-    :param target_word: target word
-    :param language: language of sentences
+    Contexts clustering according to the meaning of the target_word.
+    :param sentences: list of sentences that contain the same target word (target_word_lemma)
+    :param target_positions: list of target word positions
+        Position example: '110-114'
+            Where '110-114' - indexes of the first and last characters of the target word
+        Another example: '17-22,86-91' - positions for different target words are separated by a comma
+            Where '17-22' - indexes of the first and last characters of the first target word
+            And '86-91' - indexes of the first and last characters of the second target word
+    :param target_word_lemma: target word lemma, you can use it or not
+    :param language: language of sentences. For example 'ru'.
     :return: clustering labels
     """
     # ############################ REPLACE THIS WITH YOUR CODE #############################
+    for context, pos in zip(sentences, target_positions):
+        # bts-rnc doesn't contain multiple target words in the same sentence
+        l, r = (int(p) for p in pos.split(",")[0].split("-"))
+
+        # Example of sentence tokenization
+        target_word = context[l:r+1]
+        left_tokens, right_tokens = tokenize(context[:l]), tokenize(context[r+1:])
+        tokens = left_tokens + [target_word] + right_tokens
+        target_idx = len(left_tokens)
+
     # random clusterizer
-    return list(randint(0, 1) for _ in range(len(target_idxs)))
+    return list(randint(0, 1) for _ in range(len(target_positions)))
     # ############################ REPLACE THIS WITH YOUR CODE #############################
 
 
 def cluster_sentences(
-    target_words: List[int],
-    tokens_lists: List[List[str]],
-    target_idxs: List[int],
+    target_words: List[str],
+    sentences: List[str],
+    target_positions: List[str],
     language: str = "ru",
 ) -> List[str]:
     """
-    tokens_lists and target_idxs are grouped by target_words
+    sentences and target_positions are grouped by target_words
     and then clustered according to the meaning of the target word.
     Obtained labels are combined according
     to the initial positions of the instances.
     :param target_words: list of ambiguous words
-    :param tokens_lists: list of sentences that are represented as lists of tokens
-    :param target_idxs: list of target word indexes
+    :param sentences: list of sentences
+    :param target_positions: list of target word positions
     :param language: language of sentences. You can use a specific model for each language.
     :return: clustering labels
     """
 
     instances = sorted(
-        zip(target_words, range(len(target_idxs))), key=lambda it: it[0],
+        zip(target_words, range(len(target_positions))), key=lambda it: it[0],
     )
 
     idx2label = dict()
     for target_word, grouped_instances in groupby(instances, lambda it: it[0]):
         grouped_inst_idxs = [idx for _, idx in grouped_instances]
-        grouped_tokens_lists = [tokens_lists[idx] for idx in grouped_inst_idxs]
-        grouped_target_idxs = [target_idxs[idx] for idx in grouped_inst_idxs]
+        grouped_sentences = [sentences[idx] for idx in grouped_inst_idxs]
+        grouped_target_positions = [target_positions[idx] for idx in grouped_inst_idxs]
 
         labels = cluster_target_word_instances(
-            grouped_tokens_lists, grouped_target_idxs, target_word
+            grouped_sentences, grouped_target_positions, target_word
         )
         for label, idx in zip(labels, grouped_inst_idxs):
             idx2label[idx] = label
 
-    return [idx2label[idx] for idx in range(len(target_idxs))]
+    return [idx2label[idx] for idx in range(len(target_positions))]
