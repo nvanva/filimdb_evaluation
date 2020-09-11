@@ -2,9 +2,8 @@ import logging
 from fire import Fire
 from pathlib import Path
 
-from wsi.dataset import load_dataset, save_preds
-from wsi.clusterizer import cluster_sentences
-from wsi.score import score_preds
+from clusterizer import cluster_sentences
+from score import score_preds, load_dataset, save_preds
 
 
 def evaluate(dataset: str = "bts-rnc"):
