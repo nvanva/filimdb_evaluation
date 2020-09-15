@@ -19,7 +19,7 @@ def extract_wsi_data_if_not_exists():
 
 def load_bts_rnc_dataset(
     data_path: Path = BTSRNC,
-    parts: Tuple[str] = ("train", "test"),
+    parts: Tuple = ("train", "test"),
 ):
     extract_wsi_data_if_not_exists()
     part2data = OrderedDict()
@@ -39,7 +39,7 @@ def load_bts_rnc_dataset(
 
 def load_russe_labels(
     data_path: Path = BTSRNC,
-    parts: Tuple[str] = ("train", "test"),
+    parts: Tuple = ("train", "test"),
 ):
     extract_wsi_data_if_not_exists()
     part2labels = OrderedDict()
@@ -76,7 +76,7 @@ def load_dataset(
 def load_labels(
     dataset: str,
     data_path: Path = DATA_DIR,
-    parts: Tuple[str] = ("train", "test"),
+    parts: Tuple = ("train", "test"),
 ) -> Dict[str, Tuple[List[int], List[str], List[str]]]:
     if dataset == "bts-rnc":
         return load_russe_labels(data_path / dataset, parts=parts)
@@ -141,7 +141,7 @@ def score_preds(
     dataset: str,
     preds_fname: Path,
     data_path: Path = DATA_DIR,
-    parts: Tuple[str] = ("train", "test"),
+    parts: Tuple = ("train", "test"),
 ) -> Dict[str, Dict[str, float]]:
     """
     Scores predicted labels from the "preds_fname" file.
