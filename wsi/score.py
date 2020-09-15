@@ -94,15 +94,20 @@ def save_preds(
             idx for part_idxs, _, _ in part2labels.values()
             for idx in part_idxs
         ]
+        target_words = [
+            tw for _, _, part_target_words in part2labels.values()
+            for tw in part_target_words
+        ]
         assert len(context_idxs) == len(idx2label), \
             f"Number of predicted instances " \
             f"doesn't match gold number of instances"
         labels_to_save = [idx2label[idx] for idx in context_idxs]
         df = pd.DataFrame.from_dict({
             "context_id": context_idxs,
-            "predicted_label": labels_to_save
+            "word": target_words,
+            "predict_sense_id": labels_to_save,
         })
-        df.to_csv(preds_fname)
+        df.to_csv(preds_fname, sep="\t")
     else:
         raise ValueError(f'Dataset "{dataset}" is not available')
 
@@ -147,8 +152,12 @@ def score_preds(
     :param parts: which parts of the dataset should be scored
     :return: dict of scores for each part of the dataset
     """
-    df = pd.read_csv(preds_fname)
-    idx2label = {r.context_id: r.predicted_label for _, r in df.iterrows()}
+    preds_df = pd.read_csv(
+        preds_fname, sep="\t",
+        usecols=["context_id", "predict_sense_id"],
+        dtype={"predict_sense_id": str},
+    )
+    idx2label = {r.context_id: r.predict_sense_id for _, r in preds_df.iterrows()}
     part2labels = load_labels(dataset, data_path=data_path, parts=parts)
     part2scores = dict()
     for part, data in part2labels.items():

@@ -41,7 +41,7 @@ def evaluate(dataset: str = "bts-rnc"):
 
     assert num_instances == len(idx2label)
 
-    preds_fname = Path(__file__).resolve().with_name(dataset).with_suffix(".csv")
+    preds_fname = Path(__file__).resolve().with_name(dataset).with_suffix(".tsv")
     save_preds(idx2label, dataset, preds_fname=preds_fname)
     logging.info(f"Predictions saved to '{preds_fname}'")
     logging.info(f"Scoring '{preds_fname}' predictions")
