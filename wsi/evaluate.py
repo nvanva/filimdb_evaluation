@@ -7,7 +7,7 @@ FILIMDB_PATH = Path(__file__).resolve().parent.parent
 sys.path.append(str(FILIMDB_PATH))
 
 from wsi.clusterizer import cluster_sentences
-from wsi.score import score_preds, load_dataset, save_preds
+from wsi.score import score_preds, load_dataset, save_preds, score_loaded
 
 
 def evaluate(dataset: str = "bts-rnc"):
@@ -41,12 +41,13 @@ def evaluate(dataset: str = "bts-rnc"):
 
     assert num_instances == len(idx2label)
 
-    preds_fname = Path(__file__).resolve().with_name(dataset).with_suffix(".tsv")
-    save_preds(idx2label, dataset, preds_fname=preds_fname)
-    logging.info(f"Predictions saved to '{preds_fname}'")
-    logging.info(f"Scoring '{preds_fname}' predictions")
-    scores = score_preds(dataset, preds_fname=preds_fname)
+    logging.info(f"Scoring train predictions")
+    scores = score_loaded(dataset, idx2label, parts=("train",))
     logging.info(f"Scoring done. Scores: {scores}")
+
+    preds_fname = Path(__file__).resolve().with_name(f"{dataset}-test").with_suffix(".tsv.tar.gz")
+    save_preds(idx2label, dataset, preds_fname=preds_fname, parts=("test",))
+    logging.info(f"Test predictions saved to '{preds_fname}'")
 
 
 if __name__ == "__main__":

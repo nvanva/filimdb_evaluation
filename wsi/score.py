@@ -42,7 +42,7 @@ def load_russe_labels(
     parts: Tuple = ("train", "test"),
 ):
     extract_wsi_data_if_not_exists()
-    part2labels = OrderedDict()
+    part2df = OrderedDict()
     for part in parts:
         df = pd.read_csv(
             data_path / f"{part}.csv", sep="\t", encoding="utf-8",
@@ -54,8 +54,8 @@ def load_russe_labels(
         target_words = df.word.tolist()
         if part in ("test",):
             labels = None
-        part2labels[part] = (context_idxs, labels, target_words)
-    return part2labels
+        part2df[part] = df
+    return part2df
 
 
 def load_dataset(
@@ -77,7 +77,7 @@ def load_labels(
     dataset: str,
     data_path: Path = DATA_DIR,
     parts: Tuple = ("train", "test"),
-) -> Dict[str, Tuple[List[int], List[str], List[str]]]:
+) -> Dict[str, pd.DataFrame]:
     if dataset == "bts-rnc":
         return load_russe_labels(data_path / dataset, parts=parts)
     raise ValueError(f'Dataset "{dataset}" is not available')
@@ -87,27 +87,13 @@ def save_preds(
     idx2label: Dict[int, str],
     dataset: str,
     preds_fname: Path,
+    parts: Tuple = ("test",),
 ):
     if dataset == "bts-rnc":
-        part2labels = load_russe_labels(BTSRNC)
-        context_idxs = [
-            idx for part_idxs, _, _ in part2labels.values()
-            for idx in part_idxs
-        ]
-        target_words = [
-            tw for _, _, part_target_words in part2labels.values()
-            for tw in part_target_words
-        ]
-        assert len(context_idxs) == len(idx2label), \
-            f"Number of predicted instances " \
-            f"doesn't match gold number of instances"
-        labels_to_save = [idx2label[idx] for idx in context_idxs]
-        df = pd.DataFrame.from_dict({
-            "context_id": context_idxs,
-            "word": target_words,
-            "predict_sense_id": labels_to_save,
-        })
-        df.to_csv(preds_fname, sep="\t")
+        part2df = load_russe_labels(BTSRNC, parts=parts)
+        df = pd.concat((part2df[part] for part in parts), ignore_index=False)
+        df["predict_sense_id"] = [idx2label[idx] for idx in df.context_id]
+        df.to_csv(preds_fname, compression='gzip', sep="\t")
     else:
         raise ValueError(f'Dataset "{dataset}" is not available')
 
@@ -137,6 +123,25 @@ def score_part(
     return {"ARI": round(weighted_avg / len(target_words), 6)}
 
 
+def score_loaded(
+    dataset: str,
+    idx2label: Path,
+    data_path: Path = DATA_DIR,
+    parts: Tuple = ("train", "test"),
+):
+    part2df = load_labels(dataset, data_path=data_path, parts=parts)
+    part2scores = dict()
+    for part, df in part2df.items():
+        try:
+            pred_labels = [idx2label[idx] for idx in df.context_id]
+        except KeyError as e:
+            raise KeyError(f"Context id {e} is missed in the predictions")
+        part2scores[part] = score_part(
+            df.gold_sense_id.tolist(), pred_labels, df.word.tolist()
+        )
+    return part2scores
+
+
 def score_preds(
     dataset: str,
     preds_fname: Path,
@@ -152,18 +157,14 @@ def score_preds(
     :param parts: which parts of the dataset should be scored
     :return: dict of scores for each part of the dataset
     """
+    compression = "gzip"
+    if str(preds_fname).endswith(".tsv"):
+        compression = "infer"
     preds_df = pd.read_csv(
-        preds_fname, sep="\t",
+        preds_fname, sep="\t", compression=compression,
         usecols=["context_id", "predict_sense_id"],
         dtype={"predict_sense_id": str},
     )
     idx2label = {r.context_id: r.predict_sense_id for _, r in preds_df.iterrows()}
-    part2labels = load_labels(dataset, data_path=data_path, parts=parts)
-    part2scores = dict()
-    for part, data in part2labels.items():
-        context_idxs, gold_labels, target_words = data
-        if gold_labels is None:
-            continue
-        pred_labels = [idx2label[idx] for idx in context_idxs]
-        part2scores[part] = score_part(gold_labels, pred_labels, target_words)
+    part2scores = score_loaded(dataset, idx2label, data_path, parts)
     return part2scores
