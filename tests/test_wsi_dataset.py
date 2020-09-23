@@ -34,17 +34,17 @@ def test_load_bts_rnc_dataset():
 
 
 def test_load_russe_labels():
-    part2data = load_russe_labels(BTSRNC)
-    assert "train" in part2data, f"Train part was not loaded"
-    assert "test" in part2data, f"Test part was not loaded"
-    context_idxs, labels, target_words = part2data["train"]
-    assert 3491 == len(context_idxs) == len(labels) == len(target_words)
-    assert all(isinstance(idx, int) for idx in context_idxs)
-    assert all(isinstance(label, str) for label in labels)
-    assert all(isinstance(tw, str) for tw in target_words)
+    part2df = load_russe_labels(BTSRNC)
+    assert "train" in part2df, f"Train part was not loaded"
+    assert "test" in part2df, f"Test part was not loaded"
+    df = part2df["train"]
+    assert 3491 == len(df)
+    assert all(isinstance(idx, int) for idx in df.context_id)
+    assert all(isinstance(label, str) for label in df.gold_sense_id)
+    assert all(isinstance(tw, str) for tw in df.word)
 
-    context_idxs, labels, target_words = part2data["test"]
-    assert 6556 == len(context_idxs) == len(target_words)
-    assert labels is None
-    assert all(isinstance(idx, int) for idx in context_idxs)
-    assert all(isinstance(tw, str) for tw in target_words)
+    df = part2df["test"]
+    assert 6556 == len(df)
+    # assert labels is None
+    assert all(isinstance(idx, int) for idx in df.context_id)
+    assert all(isinstance(tw, str) for tw in df.word)
