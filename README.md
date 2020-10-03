@@ -43,9 +43,6 @@ python evaluate.py
 ```
 python evaluate.py --transductive
 ```
-6. Upload preds.tsv to http://compai-msu.info/.
-Register for the appropriate competition, you will receive an e-mail with submission instructions.
-7. Upload your classifier following instructions at the appropriate Assignment Submission page.
 
 
 # Language modeling tasks
@@ -70,8 +67,6 @@ git clone https://github.com/nvanva/filimdb_evaluation.git
     ```
     python evaluate_lm.py sampling --size=20 --start-text='the meaning of life is'
     ```
-6. Load preds.tsv to ??? (coming soon).
-7. Load lm.py to  http://mdl.cs.msu.ru
 
 # Transliteration task
 
@@ -97,4 +92,3 @@ python evaluate_translit.py
 python evaluate_translit.py
 ```
 
-6. Upload preds.tsv file to the competition page: compai-msu.ru/c/translit_assignment/description 
