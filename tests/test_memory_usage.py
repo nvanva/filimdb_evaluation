@@ -57,7 +57,7 @@ def test_score_memory_usage():
     )
     message = f"Memory used by IMDB evaluation: {used_memory}"
     print(message)
-    assert used_memory < 20, message
+    assert used_memory < 30, message
 
 
 def test_score_lm_memory_usage():
