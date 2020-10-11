@@ -99,7 +99,7 @@ def load_dir(subdir, cls, examples):
 def score(y_pred, y_true):
     assert len(y_pred) == len(y_true), 'Received %d but expected %d labels' % (len(y_pred), len(y_true))
     correct = sum(y1 == y2 for y1, y2 in zip(y_pred, y_true))
-    print('Number of correct/incorrect predictions: %d/%d' % (correct, len(y_pred)))
+    print('Number of correct/total predictions: %d/%d' % (correct, len(y_pred)))
     acc = 100.0 * correct / len(y_pred)
     return acc
 
