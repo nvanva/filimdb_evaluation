@@ -2,7 +2,6 @@ import math
 from argparse import ArgumentParser
 from logging import warning
 
-import pandas
 import pathlib
 import os
 import re
@@ -22,20 +21,16 @@ def process_script(package, file_name, id_, type_, name, known_results, path_to_
         print("#" * 100)
     return known_results
 
-
-def prepare_final_xls(final_results, results_folder):
-    my_df = pandas.DataFrame(final_results).T
-    my_df = my_df.fillna(0.0)
-    my_df["theory_part_1_comment"] = ""
-    my_df["theory_part_2_comment"] = ""
-    my_df.insert(0, "Student name", my_df.name)
-    del my_df["name"]
-    time_columns = [c for c in my_df.columns if "time" in c]
-    acc_columns = [c for c in my_df.columns if "acc" in c]
-    my_df[time_columns] = my_df[time_columns].applymap(lambda x: f'{math.ceil(x)}')
-    my_df[acc_columns] = my_df[acc_columns].applymap(lambda x: f'{x:6.3f}')
-    my_df.to_excel(results_folder / "results.xls")
-
+def load_current_results(results_folder):
+    current_results = {}
+    for p in results_folder.glob('*json'):
+        try:
+            for fres in results_folder.glob("results*.json"):
+                with fres.open("r") as inp:
+                    current_results.update(json.load(inp))
+        except Exception as e:
+            warning(str(e))
+    return current_results
 
 SOLUTION_REGEX = r"(?P<name>^[^_]*)_(?:LATE_)?(?P<id>[0-9]{4,})_.*_(?P<type>[\w-]*$)"
 
@@ -64,14 +59,7 @@ if __name__ == "__main__":
         if not folder.exists():
             folder.mkdir()
 
-    current_results = {}
-    for p in results_folder.glob('*json'):
-        try:
-            with (results_folder / "results.json").open("r") as inp:
-                current_results.update(json.load(inp))
-        except Exception as e:
-            warning(str(e))
-
+    current_results = load_current_results(results_folder)
     for index, file_path in enumerate(sorted(submissions_folder.glob("*/*.py"))):
         file_name = str(file_path.stem)
         if "__init__" in file_name:
