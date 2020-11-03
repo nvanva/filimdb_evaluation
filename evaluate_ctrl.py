@@ -56,9 +56,9 @@ def main(package, file_name, train_timeout=60 * 30, eval_timeout=60 * 30, transd
                 print("Timeout on pretraining!" % part)
             return handle_exc(e, module, results)
 
-       pretrain_time = time() - st
-       results["pretrain_time"] = pretrain_time
-       print('Classifier pretrained in %.2fs' % pretrain_time)
+        pretrain_time = time() - st
+        results["pretrain_time"] = pretrain_time
+        print('Classifier pretrained in %.2fs' % pretrain_time)
     else:
         part2xy = load_dataset_fast('FILIMDB_hidden', SCORED_PARTS)
         pretrain_params = None
