@@ -72,10 +72,9 @@ if __name__ == "__main__":
         matched = matched.groups()
 
         student_name, student_id, submission_type = matched
-        print(index, file_name, student_name, student_id, submission_type, sep=', ')
+        print(index, file_name, student_name, student_id, submission_type, sep=', ', flush=True)
         if args.index is None or args.index == index:
             process_script(file_name=file_name, id_=student_id, type_=submission_type, name=student_name,
                            known_results=current_results,
                            package=".".join(str(file_path).split("/")[:-1]),
                            path_to_results=results_folder / f"results{index}.json")
-    prepare_final_xls(current_results, results_folder)
