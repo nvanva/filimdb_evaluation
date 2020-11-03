@@ -7,6 +7,7 @@ from contextlib import contextmanager
 import importlib
 import traceback
 from fire import Fire
+import evaluate
 
 class TimeoutException(Exception): pass
 
@@ -32,7 +33,7 @@ def handle_exc(e, module, results):
     return results 
 
 
-def main(package, file_name, train_timeout=60 * 30, eval_timeout=60 * 30, transductive=False):
+def main(package, file_name, ds_name='FILIMDB_hidden', transductive=False,  train_timeout=60 * 30, test_timeout=60 * 30):
     results = {}
     try:
         module = importlib.import_module(f".{file_name}", package)
@@ -40,69 +41,52 @@ def main(package, file_name, train_timeout=60 * 30, eval_timeout=60 * 30, transd
     except BaseException as e:
        return handle_exc(e, module if 'module' in locals() else None, results)
 
+    ds = evaluate.load_ds(ds_name)
     if hasattr(module, 'pretrain'):
-        part2xy = load_dataset_fast('FILIMDB_hidden', SCORED_PARTS+('train_unlabeled',))
-        pretrain_parts = part2xy.keys() if transductive else {'train', 'train_unlabeled'}
-        pretrain_texts = [part2xy[part][1] for part in pretrain_parts]
-        total_texts = sum(len(text) for text in pretrain_texts)
-        print('\nPretraining classifier on %d examples from %s; transductive=%s' % (total_texts, pretrain_parts,transductive))
         st = time()
         try:
             with time_limit(train_timeout):
-                pretrain_params = module.pretrain(pretrain_texts)
+                pretrain_params = evaluate.pretrain(ds_name, module, ds, transductive)
         except BaseException as e:
             if isinstance(e, TimeoutException):
                 results["pretrain_time"] = train_timeout
-                print("Timeout on pretraining!" % part)
+                print("Timeout on pretraining!")
             return handle_exc(e, module, results)
 
-       pretrain_time = time() - st
-       results["pretrain_time"] = pretrain_time
-       print('Classifier pretrained in %.2fs' % pretrain_time)
+        pretrain_time = time() - st
+        results["pretrain_time"] = pretrain_time
+        print('Classifier pretrained in %.2fs' % pretrain_time)
     else:
-        part2xy = load_dataset_fast('FILIMDB_hidden', SCORED_PARTS)
+        results["pretrain_time"] = -1
         pretrain_params = None
 
-    train_ids, train_texts, train_labels = part2xy['train']
-    print('\nTraining classifier on %d examples from train set ...' % len(train_texts))
     st = time()
     try:
         with time_limit(train_timeout):
-            params = module.train(train_texts, train_labels, pretrain_params=pretrain_params)
+            params = evaluate.train(module, ds, pretrain_params)
     except BaseException as e:
          if isinstance(e, TimeoutException):
             results["train_time"] = train_timeout
-            print("Timeout on training!" % part)
+            print("Timeout on training!")
          return handle_exc(e, module, results)
 
     train_time = time() - st
     results["train_time"] = train_time
 
-    print('Classifier trained in %.2fs' % train_time)
 
-    allpreds = []
-    for part, (ids, x, y) in part2xy.items():
-        print('\nClassifying %s set with %d examples ...' % (part, len(x)))
-        st = time()
-        try:
-            with time_limit(eval_timeout):
-                preds = module.classify(x, params)
-        except BaseException as e:
-            if isinstance(e, TimeoutException):
-                print("Timeout on evaluating %s set!" % part)
-                results["eval_on_%s_set_time" % part] = eval_timeout
-            return handle_exc(e, module, results)
+    st = time()
+    try:
+        with time_limit(test_timeout):
+            metrics, preds = evaluate.test(module, ds,  params)
+    except BaseException as e:
+        if isinstance(e, TimeoutException):
+            print("Timeout on testing!")
+            results["test_time"] = test_timeout
+        return handle_exc(e, module, results)
 
-        eval_time = time() - st
-        results["eval_on_%s_set_time" % part] = eval_time
-        print('%s set classified in %.2fs' % (part, eval_time))
-        allpreds.extend(zip(ids, preds))
-
-        if y is None:
-            print('no labels for %s set' % part)
-        else:
-            acc = score(preds, y)
-            results["eval_on_%s_set_acc" % part] = acc
+    results["test_time"] = time() - st
+    for part, acc in metrics.items():
+        results["%s_acc" % part] = acc
     del sys.modules[module.__name__]
     return results
 
