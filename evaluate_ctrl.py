@@ -52,11 +52,13 @@ def main(package, file_name, train_timeout=60 * 30, eval_timeout=60 * 30, transd
                 pretrain_params = module.pretrain(pretrain_texts)
         except BaseException as e:
             if isinstance(e, TimeoutException):
-                results["train_time"] = train_timeout
-                print("Timeout on training!" % part)
+                results["pretrain_time"] = train_timeout
+                print("Timeout on pretraining!" % part)
             return handle_exc(e, module, results)
 
-        print('Classifier pretrained in %.2fs' % (time() - st))
+       pretrain_time = time() - st
+       results["pretrain_time"] = pretrain_time
+       print('Classifier pretrained in %.2fs' % pretrain_time)
     else:
         part2xy = load_dataset_fast('FILIMDB_hidden', SCORED_PARTS)
         pretrain_params = None
