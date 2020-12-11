@@ -1,5 +1,4 @@
 import fire
-import gzip
 import numpy as np
 from tqdm import tqdm
 from itertools import chain
@@ -10,7 +9,7 @@ from lm import train, next_proba_gen
 from score_lm import load_dataset, save_preds, score_preds, PTB_PATH
 import datetime
 
-PREDS_FNAME = Path(__file__).with_name("preds_lm.tsv.gz")
+PREDS_FNAME = Path(__file__).with_name("preds_lm.tsv")
 
 
 def datetime_str():

@@ -13,8 +13,6 @@ from score import score_preds, FILIMDB_PATH
 from score_lm import score_preds as score_preds_lm, PTB_PATH
 from score_translit import score_preds as score_preds_translit, TRANSLIT_PATH
 
-from evaluate_lm import PREDS_FNAME as LM_PREDS_FNAME
-
 score_preds = profile(score_preds)
 score.load_labels_only = profile(score.load_labels_only)
 score.score_preds_loaded = profile(score.score_preds_loaded)
@@ -63,7 +61,7 @@ def test_score_memory_usage():
 
 
 def test_score_lm_memory_usage():
-    if not LM_PREDS_FNAME.exists():
+    if not PTB_PATH.with_name("preds_lm.tsv").exists():
         subprocess.run([
             "python",
             Path(__file__).parent.parent / "evaluate_lm.py",
@@ -72,12 +70,12 @@ def test_score_lm_memory_usage():
 
     scoring_result, used_memory = profile_function_memory(
         score_preds_lm,
-        LM_PREDS_FNAME,
+        PTB_PATH.with_name("preds_lm.tsv"),
         PTB_PATH,
     )
     message = f"Memory used by Language Model evaluation: {used_memory}"
     print(message)
-    assert used_memory < 65, message
+    assert used_memory < 60, message
 
 
 def test_score_translit_memory_usage():
