@@ -54,16 +54,17 @@ def save_preds(preds, preds_fname):
     print('Predictions saved to %s' % preds_fname)
 
 
-def load_preds(preds_fname):
+def load_preds(preds_fname, compressed=False):
     """
     Load classifier predictions in format appropriate for scoring.
     """
+    c = 'gzip' if compressed else 'infer'
     # reading data by columns is necessary to use less memory (for low resource server)
-    prevs = list(read_csv(preds_fname, sep='\t', usecols=["prev"])["prev"])
-    true_probs = np.float32(read_csv(preds_fname, sep='\t', usecols=["true_prob"])["true_prob"])
-    true_ranks = np.int32(read_csv(preds_fname, sep='\t', usecols=["true_rank"])["true_rank"])
-    kl_uniform = np.float32(read_csv(preds_fname, sep='\t', usecols=["kl_uniform"])["kl_uniform"])
-    kl_unigram = np.float32(read_csv(preds_fname, sep='\t', usecols=["kl_unigram"])["kl_unigram"])
+    prevs = list(read_csv(preds_fname, sep='\t', compression=c, usecols=["prev"])["prev"])
+    true_probs = np.float32(read_csv(preds_fname, sep='\t', compression=c, usecols=["true_prob"])["true_prob"])
+    true_ranks = np.int32(read_csv(preds_fname, sep='\t', compression=c, usecols=["true_rank"])["true_rank"])
+    kl_uniform = np.float32(read_csv(preds_fname, sep='\t', compression=c, usecols=["kl_uniform"])["kl_uniform"])
+    kl_unigram = np.float32(read_csv(preds_fname, sep='\t', compression=c, usecols=["kl_unigram"])["kl_unigram"])
     return prevs, true_probs, true_ranks, kl_uniform, kl_unigram
 
 
@@ -84,8 +85,8 @@ def compute_average_kl(kl_divergence):
     return np.mean(kl_divergence)
 
 
-def score_preds(preds_path, ptb_path=PTB_PATH):
-    data = load_preds(preds_path)
+def score_preds(preds_path, ptb_path=PTB_PATH, compressed=False):
+    data = load_preds(preds_path, compressed=compressed)
     recieved_text, probs, ranks, kl_uniform, kl_unigram = data
 
     with open(os.path.join(ptb_path, "ptb.train.txt"), "r") as f:
