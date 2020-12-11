@@ -1,4 +1,5 @@
 import os
+import gzip
 import collections
 import codecs
 import numpy as np
@@ -48,9 +49,12 @@ def save_preds(preds, preds_fname):
     """
     Save classifier predictions in format appropriate for scoring.
     """
-    with codecs.open(preds_fname, 'w') as outp:
+    # with codecs.open(preds_fname, 'w') as outp:
+    #     for vals in preds:
+    #         print(*vals, sep='\t', file=outp)
+    with gzip.open(preds_fname, 'wb') as outp:
         for vals in preds:
-            print(*vals, sep='\t', file=outp)
+            outp.write(('\t'.join(str(v) for v in vals) + '\n').encode())
     print('Predictions saved to %s' % preds_fname)
 
 
@@ -59,11 +63,11 @@ def load_preds(preds_fname):
     Load classifier predictions in format appropriate for scoring.
     """
     # reading data by columns is necessary to use less memory (for low resource server)
-    prevs = list(read_csv(preds_fname, sep='\t', usecols=["prev"])["prev"])
-    true_probs = np.float32(read_csv(preds_fname, sep='\t', usecols=["true_prob"])["true_prob"])
-    true_ranks = np.int32(read_csv(preds_fname, sep='\t', usecols=["true_rank"])["true_rank"])
-    kl_uniform = np.float32(read_csv(preds_fname, sep='\t', usecols=["kl_uniform"])["kl_uniform"])
-    kl_unigram = np.float32(read_csv(preds_fname, sep='\t', usecols=["kl_unigram"])["kl_unigram"])
+    prevs = list(read_csv(preds_fname, sep='\t', compression="gzip", usecols=["prev"])["prev"])
+    true_probs = np.float32(read_csv(preds_fname, sep='\t', compression="gzip", usecols=["true_prob"])["true_prob"])
+    true_ranks = np.int32(read_csv(preds_fname, sep='\t', compression="gzip", usecols=["true_rank"])["true_rank"])
+    kl_uniform = np.float32(read_csv(preds_fname, sep='\t', compression="gzip", usecols=["kl_uniform"])["kl_uniform"])
+    kl_unigram = np.float32(read_csv(preds_fname, sep='\t', compression="gzip", usecols=["kl_unigram"])["kl_unigram"])
     return prevs, true_probs, true_ranks, kl_uniform, kl_unigram
 
 
