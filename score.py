@@ -3,6 +3,7 @@ from pathlib import Path
 import os
 import codecs
 import random
+import gzip
 
 random.seed(3)  # set random seed for each run of the script to produce the same results
 SCORED_PARTS = ('train', 'dev', 'test', 'dev-b', 'test-b')
@@ -114,23 +115,23 @@ def save_preds(preds, preds_fname):
     print('Predictions saved to %s' % preds_fname)
 
 
-def load_preds(preds_fname):
+def load_preds(preds_fname, compressed=False):
     """
     Save classifier predictions in format appropriate for scoring.
     """
-    with codecs.open(preds_fname, 'r') as inp:
+    with (gzip.open(preds_fname, 'rt') if compressed else codecs.open(preds_fname, 'r')) as inp:
         pairs = [l.strip().split('\t') for l in inp.readlines()]
     ids, preds = zip(*pairs)
     return ids, preds
 
 
-def score_preds(preds_fname, data_dir=FILIMDB_PATH):
+def score_preds(preds_fname, data_dir=FILIMDB_PATH, compressed=False):
     part2labels = load_labels_only(data_dir=data_dir, parts=SCORED_PARTS)
-    return score_preds_loaded(part2labels, preds_fname)
+    return score_preds_loaded(part2labels, preds_fname, compressed=compressed)
 
 
-def score_preds_loaded(part2labels, preds_fname):
-    pred_ids, pred_y = load_preds(preds_fname)
+def score_preds_loaded(part2labels, preds_fname, compressed=False):
+    pred_ids, pred_y = load_preds(preds_fname, compressed=compressed)
     pred_dict = {i: y for i, y in zip(pred_ids, pred_y)}
     scores = {}
     for part, (true_ids, true_y) in part2labels.items():
