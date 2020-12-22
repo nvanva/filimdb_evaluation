@@ -221,14 +221,14 @@ class Evaluator:
 
 def load_ds(ptb_path=PTB_PATH):
     raw_data = load_dataset(ptb_path)
-    train_data, dev_data, test_data, word_to_id, id_to_word, ptb_path = raw_data
+    train_data, dev_data, test_data, word_to_id, id_to_word = raw_data
     unigram_probs = train_unigram_model(train_data, word_to_id)
-    return (train_data, dev_data, test_data, word_to_id, id_to_word, ptb_path, ptb_path), unigram_probs
+    return raw_data, unigram_probs, ptb_path
 
 
 def train(module, ds, pretrain_params):
-    raw_data, unigram_probs = ds
-    train_data, dev_data, test_data, word_to_id, id_to_word, ptb_path = raw_data
+    raw_data, unigram_probs, ptb_path = ds
+    train_data, dev_data, test_data, word_to_id, id_to_word = raw_data
 
     print(datetime_str(), 'Training model ...')
     model = module.train(train_data, word_to_id, id_to_word)
@@ -237,8 +237,8 @@ def train(module, ds, pretrain_params):
 
 
 def test(module, ds, model):
-    raw_data, unigram_probs = ds
-    train_data, dev_data, test_data, word_to_id, id_to_word, ptb_path = raw_data
+    raw_data, unigram_probs, ptb_path = ds
+    train_data, dev_data, test_data, word_to_id, id_to_word = raw_data
 
     allpreds = [['prev', 'pred1', 'pred2', 'pred3',
                  'true_prob', 'true_rank', 'kl_uniform', 'kl_unigram']]
