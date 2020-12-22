@@ -7,7 +7,8 @@ from contextlib import contextmanager
 import importlib
 import traceback
 from fire import Fire
-import evaluate
+# import evaluate
+import evaluate_lm as evaluate
 
 class TimeoutException(Exception): pass
 

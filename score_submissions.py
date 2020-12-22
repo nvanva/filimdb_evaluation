@@ -9,11 +9,11 @@ import shutil
 import json
 from pathlib import Path
 
-def process_script(package, file_name, id_, type_, name, known_results, path_to_results):
+def process_script(ds_name, package, file_name, id_, type_, name, known_results, path_to_results):
     from evaluate_ctrl import main
     key = f"{id_}_{type_}"
     if key not in known_results:
-        script_results = main(file_name=file_name, package=package)
+        script_results = main(file_name=file_name, package=package, ds_name=ds_name)
         known_results[key] = script_results
         known_results[key]["name"] = name
         with path_to_results.open("w") as f:
@@ -44,9 +44,13 @@ if __name__ == "__main__":
     parser.add_argument("--index", help="Index of the submission to evaluate. Use for parallel evaluation.",
                         default=None,
                         type=int)
+    parser.add_argument("--ds_name", help="Dataset name.",
+                        default="FILIMDB_hidden",
+                        type=str)
     args = parser.parse_args()
 
     hw_folder = args.hw_folder
+    ds_name = args.ds_name
 
     if not hw_folder.exists():
         raise FileNotFoundError("Solutions directory does not exist")
@@ -74,7 +78,7 @@ if __name__ == "__main__":
         student_name, student_id, submission_type = matched
         print(index, file_name, student_name, student_id, submission_type, sep=', ', flush=True)
         if args.index is None or args.index == index:
-            process_script(file_name=file_name, id_=student_id, type_=submission_type, name=student_name,
+            process_script(ds_name=ds_name, file_name=file_name, id_=student_id, type_=submission_type, name=student_name,
                            known_results=current_results,
                            package=".".join(str(file_path).split("/")[:-1]),
                            path_to_results=results_folder / f"results{index}.json")
