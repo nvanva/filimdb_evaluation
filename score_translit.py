@@ -67,7 +67,7 @@ def save_preds(preds, preds_fname):
     print('Predictions saved to %s' % preds_fname)
 
 
-def load_preds(preds_fname, top_k=1):
+def load_preds(preds_fname, top_k=1, compressed=False):
     """
     Load classifier predictions in format appropriate for scoring.
     """
@@ -75,6 +75,7 @@ def load_preds(preds_fname, top_k=1):
         "filepath_or_buffer": preds_fname,
         "names": ["id", "pred"],
         "sep": '\t',
+        "compression": 'gzip' if compressed else 'infer'
     }
 
     pred_ids = list(read_csv(**kwargs, usecols=["id"])["id"])
@@ -114,9 +115,9 @@ def score(preds, true):
     return {'acc@1': acc_1}
 
 
-def score_preds(preds_path, data_dir, parts=SCORED_PARTS):
+def score_preds(preds_path, data_dir, parts=SCORED_PARTS, compressed=False):
     part2iy = load_transliterations_only(data_dir, parts=parts)
-    pred_ids, pred_dict = load_preds(preds_path)
+    pred_ids, pred_dict = load_preds(preds_path, compressed)
     # pred_dict = {i:y for i,y in zip(pred_ids, pred_y)}
     scores = {}
     for part, (true_ids, true_y) in part2iy.items():
