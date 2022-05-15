@@ -1,9 +1,8 @@
 import torch
 from fire import Fire
-
+import numpy as np
 from translit import PositionalEncoding, LrScheduler, MultiHeadAttention,\
     compositional_mask
-
 
 def test_positional_encoding():
     pe = PositionalEncoding(max_len=3, hidden_size=4)
@@ -21,10 +20,10 @@ def test_lr_scheduler():
     lr_peak = 3e-4
     sch = LrScheduler(100, type=lrs_type, warmup_steps_part=warmup_steps_part,
                       lr_peak=lr_peak)
-    assert sch.learning_rate(step=5) - 15e-5 < 1e-6
-    assert sch.learning_rate(step=10) - 3e-4 < 1e-6
-    assert sch.learning_rate(step=50) - 166e-6 < 1e-6
-    assert sch.learning_rate(step=100) - 0. < 1e-6
+    assert np.abs(sch.learning_rate(step=5) - 15e-5) < 1e-6
+    assert np.abs(sch.learning_rate(step=10) - 3e-4) < 1e-6
+    assert np.abs(sch.learning_rate(step=50) - 166e-6) < 1e-6
+    assert np.abs(sch.learning_rate(step=100) - 0.) < 1e-6
     print('Test is passed!')
 
 

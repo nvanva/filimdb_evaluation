@@ -13,10 +13,11 @@ def load_ds(ds_name: str):
 
 def pretrain(ds_name, module, part2xy, transductive):
     train_ids, train_texts, train_labels = part2xy['train']
+    
     _, train_unlabeled_texts, _ = score.load_dataset_fast(ds_name, parts=('train_unlabeled',))['train_unlabeled']
 
     if transductive:
-        all_texts = list(text for _, text, _ in part2xy.values())
+        all_texts = [text for _, text, _ in part2xy.values()] + [train_unlabeled_texts]
     else:
         all_texts = [train_texts, train_unlabeled_texts]
 
