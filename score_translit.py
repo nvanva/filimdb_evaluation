@@ -88,7 +88,7 @@ def load_preds(preds_fname, top_k=1, compressed=False):
     }
 
     for y in pred_y.values():
-        assert len(y) == top_k
+        assert len(y) == top_k, f'len(y)={len(y)}, top_k={top_k}, {preds_fname}'
 
     return pred_ids, pred_y
 
@@ -117,7 +117,7 @@ def score(preds, true):
 
 def score_preds(preds_path, data_dir, parts=SCORED_PARTS, compressed=False):
     part2iy = load_transliterations_only(data_dir, parts=parts)
-    pred_ids, pred_dict = load_preds(preds_path, compressed)
+    pred_ids, pred_dict = load_preds(preds_path, compressed=compressed)
     # pred_dict = {i:y for i,y in zip(pred_ids, pred_y)}
     scores = {}
     for part, (true_ids, true_y) in part2iy.items():
