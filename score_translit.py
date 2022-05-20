@@ -61,7 +61,7 @@ def save_preds(preds, preds_fname):
     """
     Save classifier predictions in format appropriate for scoring.
     """
-    with codecs.open(preds_fname, 'w') as outp:
+    with codecs.open(preds_fname, 'w', encoding='utf-8') as outp:
         for idx, preds in preds:
             print(idx, *preds, sep='\t', file=outp)
     print('Predictions saved to %s' % preds_fname)
